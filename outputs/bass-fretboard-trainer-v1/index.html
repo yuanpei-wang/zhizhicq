@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>贝斯指板练习</title>
+  <link rel="stylesheet" href="../bass-fretboard-trainer-v0/styles.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>贝斯指板练习</h1>
+      <p class="subtitle">看到目标音，直接用你的贝斯作答</p>
+    </header>
+
+    <section id="audioControls" class="card controls">
+      <label for="deviceSelect">音频输入设备</label>
+      <div class="control-row">
+        <button id="startButton">启用音频</button>
+        <select id="deviceSelect" disabled><option value="">启用后读取设备</option></select>
+      </div>
+      <p id="deviceStatus" class="status"><span class="dot"></span>尚未连接</p>
+      <div class="instrument-config">
+        <label for="fretCount">贝斯品数</label>
+        <select id="fretCount" class="compact-select" aria-label="贝斯品数">
+          <option value="20" selected>20 品</option>
+          <option value="21">21 品</option>
+          <option value="22">22 品</option>
+          <option value="24">24 品</option>
+        </select>
+      </div>
+      <details id="diagnosticPanel" class="diagnostic-panel">
+        <summary>音频诊断</summary>
+        <section class="diagnostics">
+          <div><span>信号</span><strong id="level">— dB</strong></div>
+          <div><span>置信度</span><strong id="confidence">—</strong></div>
+          <div><span>稳定帧</span><strong id="stableFrames">0 / 4</strong></div>
+        </section>
+      </details>
+      <p class="privacy">音频只在当前浏览器中分析，不上传、不保存。</p>
+    </section>
+
+    <nav id="homeView" class="home-modules" aria-label="选择练习模块">
+      <button id="fretboardTab" class="module-card">
+        <strong>指板练习</strong><small>音名、弦位、八度与反应速度</small>
+      </button>
+      <button id="theoryTab" class="module-card">
+        <strong>乐理练习</strong><small>音阶、五度音型与三和弦琶音</small>
+      </button>
+    </nav>
+
+    <section id="practiceWorkspace" hidden>
+      <div class="workspace-bar"><button id="backHomeButton" class="back-button">← 返回首页</button><strong id="workspaceTitle">指板练习</strong></div>
+
+    <section id="fretboardModule">
+    <div class="practice-grid">
+    <aside class="practice-sidebar">
+    <details class="card fretboard-options">
+      <summary><span>题目设置</span><small id="fretboardOptionsSummary">单弦 E · 仅自然音 · 不区分八度 · 不限时</small></summary>
+    <section class="settings" aria-label="练习设置">
+      <div class="setting-row">
+        <div><strong>练习弦</strong><small>专注一根弦，或每题随机换弦</small></div>
+        <div class="choice">
+          <label><input type="radio" name="stringMode" value="single" checked><span>单弦</span></label>
+          <label><input type="radio" name="stringMode" value="mixed"><span>混合弦</span></label>
+        </div>
+      </div>
+      <div id="stringPicker" class="string-picker" aria-label="选择练习弦">
+        <label><input type="radio" name="bassString" value="E" checked><span>E</span></label>
+        <label><input type="radio" name="bassString" value="A"><span>A</span></label>
+        <label><input type="radio" name="bassString" value="D"><span>D</span></label>
+        <label><input type="radio" name="bassString" value="G"><span>G</span></label>
+      </div>
+      <div class="setting-row">
+        <div><strong>出题音符</strong><small>“包含升降音”也会出现 C♯、D♯、F♯等</small></div>
+        <div class="choice">
+          <label><input type="radio" name="noteSet" value="natural" checked><span>仅自然音</span></label>
+          <label><input type="radio" name="noteSet" value="chromatic"><span>包含升降音</span></label>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div><strong>八度判定</strong><small>开启后必须区分 G2、G3等实际音高</small></div>
+        <div class="choice">
+          <label><input type="radio" name="octaveMode" value="ignore" checked><span>不区分</span></label>
+          <label><input type="radio" name="octaveMode" value="exact"><span>区分八度</span></label>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div><strong>答题时间</strong><small>超时单独记录，不算作弹错</small></div>
+        <div class="choice">
+          <label><input type="radio" name="timeLimit" value="0" checked><span>不限时</span></label>
+          <label><input type="radio" name="timeLimit" value="5"><span>5 秒</span></label>
+          <label><input type="radio" name="timeLimit" value="3"><span>3 秒</span></label>
+        </div>
+      </div>
+    </section>
+    </details>
+
+    <button id="wrongBankButton" class="wrong-bank-button">错题库 <span id="wrongCount">0</span></button>
+    </aside>
+
+    <div class="practice-main">
+    <div id="quizHome"></div>
+    <section id="quizCard" class="card quiz">
+      <div class="scorebar">
+        <span>第 <strong id="round">1</strong> 题</span>
+        <span id="timer">不限时</span>
+        <span>正确 <strong id="score">0</strong></span>
+      </div>
+      <p id="prompt" class="prompt">请弹出</p>
+      <div id="targetNote" class="target-note">—</div>
+      <p id="enharmonic" class="enharmonic"></p>
+      <p id="targetOctave" class="octave">启用音频后开始</p>
+      <button id="readyButton" class="ready-button" hidden>开始</button>
+      <div id="feedback" class="feedback waiting">等待开始</div>
+      <p id="heard" class="heard">当前识别：—</p>
+      <div class="quiz-actions">
+        <button id="exitWrongButton" class="secondary" hidden>退出错题练习</button>
+        <button id="pauseButton" class="secondary" disabled>暂停练习</button>
+        <button id="nextButton" class="secondary" disabled>跳过本题</button>
+      </div>
+    </section>
+    </div>
+    </div>
+    </section>
+
+    <section id="theoryModule" hidden>
+      <section id="theoryHub" class="theory-hub">
+        <button class="theory-card" data-theory-type="scale"><strong>音阶</strong><small>大调与自然小调完整上下行</small></button>
+        <button class="theory-card" data-theory-type="interval"><strong>五度音型</strong><small>跨四弦上行两个八度</small></button>
+        <button class="theory-card" data-theory-type="triad"><strong>三和弦琶音</strong><small>大、小三和弦跨弦练习</small></button>
+        <button class="theory-card secondary-theory" data-theory-type="degree"><strong>调内级数</strong><small>辅助记忆调内第 2～7 音</small></button>
+      </section>
+      <select id="theoryType" hidden aria-label="当前乐理练习"><option value="scale">音阶</option><option value="interval">五度音型</option><option value="triad">三和弦琶音</option><option value="degree">调内级数</option></select>
+      <section id="theoryPractice" hidden>
+      <div class="subpage-bar"><button id="backTheoryButton" class="back-button">← 返回乐理练习</button><strong id="theoryPracticeTitle">音阶</strong></div>
+      <div class="practice-grid theory-grid">
+      <aside class="practice-sidebar">
+      <details class="card theory-options">
+        <summary><span>题目设置</span><small id="theoryOptionsSummary">可选</small></summary>
+        <section class="settings theory-settings">
+        <div id="scaleQualityRow" class="setting-row">
+          <div><strong>调式</strong><small>自然小调使用固定的自然小音阶</small></div>
+          <div class="choice">
+            <label><input type="radio" name="scaleQuality" value="major" checked><span>大调</span></label>
+            <label><input type="radio" name="scaleQuality" value="minor"><span>自然小调</span></label>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div><strong id="theoryKeyLabel">调</strong><small>升降号会按照调性正确显示</small></div>
+          <select id="scaleKey" class="compact-select" aria-label="选择调">
+            <option value="random" selected>不指定</option>
+            <option value="0">C</option><option value="7">G</option><option value="2">D</option><option value="9">A</option>
+            <option value="4">E</option><option value="11">B</option><option value="6">F♯ / G♭</option><option value="1">C♯ / D♭</option>
+            <option value="8">G♯ / A♭</option><option value="3">D♯ / E♭</option><option value="10">A♯ / B♭</option><option value="5">F</option>
+          </select>
+        </div>
+        <div id="theoryStringRow" class="setting-row">
+          <div><strong>根音所在弦</strong><small>后续音符可以跨弦演奏</small></div>
+          <div class="choice">
+            <label><input type="radio" name="scaleString" value="E"><span>E 弦</span></label>
+            <label><input type="radio" name="scaleString" value="A"><span>A 弦</span></label>
+            <label><input type="radio" name="scaleString" value="D"><span>D 弦</span></label>
+            <label><input type="radio" name="scaleString" value="G"><span>G 弦</span></label>
+            <label><input type="radio" name="scaleString" value="mixed" checked><span>不指定</span></label>
+          </div>
+        </div>
+        <div id="arpStringRow" class="setting-row" hidden>
+          <div><strong>起始弦</strong><small>两八度琶音从 E 弦或 A 弦根音开始</small></div>
+          <div class="choice">
+            <label><input type="radio" name="arpString" value="E"><span>E 弦</span></label>
+            <label><input type="radio" name="arpString" value="A"><span>A 弦</span></label>
+            <label><input type="radio" name="arpString" value="mixed" checked><span>不指定</span></label>
+          </div>
+        </div>
+        <div id="triadRow" class="setting-row" hidden>
+          <div><strong>和弦类型</strong><small>连续上行两个八度</small></div>
+          <select id="triadType" class="compact-select" aria-label="三和弦类型">
+            <option value="random">不指定</option><option value="major" selected>大三和弦</option><option value="minor">小三和弦</option>
+          </select>
+        </div>
+        </section>
+      </details>
+      </aside>
+      <section class="card scale-quiz">
+        <p id="scalePrompt" class="prompt">从 A 弦上的 C 开始</p>
+        <h2 id="scaleTitle">C 大调</h2>
+        <p id="scaleDirectionText" class="scale-direction">上行一个八度，再下行返回</p>
+        <div id="scaleProgress" class="scale-progress" aria-label="C大调音阶进度"></div>
+        <div id="scaleFeedback" class="feedback waiting">启用音频后开始</div>
+        <p id="scaleHeard" class="heard"></p>
+        <div id="sequenceHintControls" class="sequence-hint-controls">
+          <span>是否显示音名</span>
+          <div class="choice">
+            <label><input type="radio" name="hintMode" value="guided"><span>显示音名</span></label>
+            <label><input type="radio" name="hintMode" value="memory" checked><span>隐藏音名</span></label>
+          </div>
+        </div>
+        <div class="quiz-actions">
+          <button id="scaleHintButton" class="secondary" hidden>显示提示</button>
+          <button id="resetScaleButton" class="secondary">重新开始</button>
+          <button id="skipTheoryButton" class="secondary">跳过本题</button>
+        </div>
+      </section>
+      </div>
+      </section>
+    </section>
+
+    </section>
+  </main>
+  <dialog id="wrongPracticeDialog" class="wrong-practice-dialog">
+    <div class="wrong-practice-head"><h2>错题练习</h2><span id="wrongPracticeRemaining"></span></div>
+    <div id="wrongPracticeBody"></div>
+  </dialog>
+  <dialog id="timeSupportDialog" class="support-dialog">
+    <h2>需要切换为不限时吗？</h2>
+    <p>已经连续 5 题超时或出现错误。可以先取消计时，专注找到正确的音。</p>
+    <div class="support-actions">
+      <button id="switchUntimedButton">返回不限时练习</button>
+      <button id="continueTimedButton" class="secondary">继续计时练习</button>
+    </div>
+  </dialog>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
