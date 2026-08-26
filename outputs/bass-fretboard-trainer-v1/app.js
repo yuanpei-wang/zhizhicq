@@ -3,7 +3,7 @@ import { detectPitch, frequencyToNote } from '../bass-fretboard-trainer-v0/pitch
 const $ = id => document.getElementById(id);
 const ui = Object.fromEntries([
   'homeView','practiceWorkspace','backHomeButton','workspaceTitle','audioControls','diagnosticPanel','deviceSelect','startButton','deviceStatus','stringPicker','fretCount','fretboardTab','theoryTab','fretboardModule','fretboardOptionsSummary','theoryModule','theoryHub','theoryPractice','backTheoryButton','theoryPracticeTitle','wrongBankButton','wrongCount','wrongPracticeDialog','wrongPracticeBody','wrongPracticeRemaining','quizHome','quizCard',
-  'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','scaleQualityRow','theoryKeyLabel','scaleKey','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','scaleHintButton','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
+  'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','scaleQualityRow','theoryKeyLabel','scaleKey','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
 ].map(id => [id,$(id)]));
 const SHARPS=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const FLATS=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
@@ -43,7 +43,7 @@ const theorySessionSettings={
   scale:{scaleQuality:'major',scaleKey:'random',scaleString:'mixed',hintMode:'memory'},
   interval:{scaleKey:'random',hintMode:'memory'},
   triad:{scaleKey:'random',arpString:'mixed',triadType:'major',hintMode:'memory'},
-  degree:{scaleQuality:'major',scaleKey:'random'}
+  degree:{scaleQuality:'major',scaleKey:'random',hintMode:'memory'}
 };
 
 const selected = name => document.querySelector(`input[name="${name}"]:checked`).value;
@@ -132,7 +132,7 @@ function startTimedQuestion(){
 function armQuestion(){armed=true;questionStartedAt=performance.now();responseMs=null;}
 
 function renderScaleProgress(){
-  const guided=theoryKind!=='degree'&&selected('hintMode')==='guided';ui.scaleProgress.innerHTML='';
+  const guided=selected('hintMode')==='guided';ui.scaleProgress.innerHTML='';
   ui.scaleProgress.classList.toggle('round-trip',theoryNames.length>8);
   ui.scaleProgress.classList.toggle('short-sequence',theoryNames.length<=3);
   ui.scaleProgress.style.gridTemplateColumns=theoryNames.length>8?'':`repeat(${theoryNames.length},minmax(0,70px))`;
@@ -147,7 +147,7 @@ function canCompleteFromString(key,string,maxSpan){
 }
 function updateTheorySettings(){
   const type=ui.theoryType.value,isScale=type==='scale',isDegree=type==='degree';
-  ui.scaleQualityRow.hidden=!(isScale||isDegree);ui.theoryStringRow.hidden=!isScale;ui.arpStringRow.hidden=type!=='triad';ui.triadRow.hidden=type!=='triad';ui.sequenceHintControls.hidden=isDegree;ui.scaleHintButton.hidden=!isDegree;
+  ui.scaleQualityRow.hidden=!(isScale||isDegree);ui.theoryStringRow.hidden=!isScale;ui.arpStringRow.hidden=type!=='triad';ui.triadRow.hidden=type!=='triad';ui.sequenceHintControls.hidden=false;
   ui.theoryKeyLabel.textContent=isScale||isDegree?'调':'根音';
 }
 
@@ -157,7 +157,7 @@ function captureTheorySettings(type=ui.theoryType.value){
   if(type==='scale'){state.scaleQuality=selected('scaleQuality');state.scaleString=selected('scaleString');state.hintMode=selected('hintMode');}
   else if(type==='interval')state.hintMode=selected('hintMode');
   else if(type==='triad'){state.arpString=selected('arpString');state.triadType=ui.triadType.value;state.hintMode=selected('hintMode');}
-  else state.scaleQuality=selected('scaleQuality');
+  else{state.scaleQuality=selected('scaleQuality');state.hintMode=selected('hintMode');}
 }
 
 function applyTheorySettings(type){
@@ -186,10 +186,10 @@ function resetScale(keepExercise=false){
   }
   const hintLabel=selected('hintMode')==='guided'?'提示':'不提示',keyLabel=keyMode==='random'?'随机调/根音':tonic.label;
   if(theoryKind==='scale')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${keyLabel} · ${stringMode==='mixed'?'随机弦':stringMode+' 弦'} · ${hintLabel}`;
-  else if(theoryKind==='degree')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${keyLabel} · 随机级数`;
+  else if(theoryKind==='degree')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${keyLabel} · 随机级数 · ${hintLabel}`;
   else if(theoryKind==='interval')ui.theoryOptionsSummary.textContent=`${keyLabel} · E 弦 · ${hintLabel}`;
   else ui.theoryOptionsSummary.textContent=`${ui.triadType.value==='random'?'随机大小和弦':ui.triadType.value==='major'?'大三和弦':'小三和弦'} · ${keyLabel} · ${stringMode==='mixed'?'随机 E/A 弦':stringMode+' 弦'} · ${hintLabel}`;
-  ui.scaleTitle.textContent=theoryLabel;ui.scaleFeedback.textContent=running?(theoryKind==='degree'?'请弹奏目标音':`请先弹根音 ${theoryNames[0]}`):'启用音频后开始';ui.scaleFeedback.className='feedback waiting';ui.scaleHeard.textContent='';ui.scaleHintButton.hidden=theoryKind!=='degree';renderScaleProgress();
+  ui.scaleTitle.textContent=theoryLabel;ui.scaleFeedback.textContent=running?(theoryKind==='degree'?'请弹奏目标音':`请先弹根音 ${theoryNames[0]}`):'启用音频后开始';ui.scaleFeedback.className='feedback waiting';ui.scaleHeard.textContent='';renderScaleProgress();
 }
 
 function handleScalePitch(midi){
@@ -199,7 +199,7 @@ function handleScalePitch(midi){
   scaleArmed=false;scaleStable=0;scaleAcceptedMidi=midi;scaleAcceptedAt=performance.now();releaseFrames=0;const heard=noteData(midi),startString=scaleExerciseString,fret=midi-STRINGS[startString],highestMidi=STRINGS.G+Number(ui.fretCount.value);
   if(theoryKind==='degree'){
     if(heard.pc!==scaleSequence[0]){ui.scaleFeedback.textContent=`再试一次 · 你弹了 ${heard.sharp}${heard.octave}`;ui.scaleFeedback.className='feedback wrong';return;}
-    scaleIndex=1;ui.scaleFeedback.textContent='正确';ui.scaleFeedback.className='feedback correct';ui.scaleHeard.textContent=`${theoryNames[0]} · 你弹了 ${heard.sharp}${heard.octave}`;ui.scaleHintButton.hidden=true;renderScaleProgress();return;
+    scaleIndex=1;ui.scaleFeedback.textContent='正确';ui.scaleFeedback.className='feedback correct';ui.scaleHeard.textContent=`${theoryNames[0]} · 你弹了 ${heard.sharp}${heard.octave}`;renderScaleProgress();return;
   }
   if(scaleIndex===0){
     if(heard.pc!==Number(scaleExerciseKey)){ui.scaleFeedback.textContent=`请先弹 ${theoryNames[0]} · 你弹了 ${heard.sharp}${heard.octave}`;ui.scaleFeedback.className='feedback wrong';return;}
@@ -210,15 +210,8 @@ function handleScalePitch(midi){
   const expected=scaleSequence[scaleIndex];
   if(midi!==expected){const wanted=noteData(expected);ui.scaleFeedback.textContent=selected('hintMode')==='memory'?`这个音不对 · 你弹了 ${heard.sharp}${heard.octave}`:`目标 ${theoryNames[scaleIndex]}${wanted.octave} · 你弹了 ${heard.sharp}${heard.octave}`;ui.scaleFeedback.className='feedback wrong';return;}
   scaleIndex++;scaleHintRevealed=false;renderScaleProgress();
-  if(scaleIndex===scaleSequence.length){ui.scaleFeedback.textContent=`完成 ${theoryLabel}`;ui.scaleFeedback.className='feedback correct';ui.scaleHeard.textContent=theoryNames.join(' → ');ui.scaleHintButton.hidden=true;}
+  if(scaleIndex===scaleSequence.length){ui.scaleFeedback.textContent=`完成 ${theoryLabel}`;ui.scaleFeedback.className='feedback correct';ui.scaleHeard.textContent=theoryNames.join(' → ');}
   else{const next=noteData(scaleSequence[scaleIndex]);ui.scaleFeedback.textContent=selected('hintMode')==='memory'?'正确 · 继续':`正确 · 下一音 ${theoryNames[scaleIndex]}${next.octave}`;ui.scaleFeedback.className='feedback correct';}
-}
-
-function revealScaleHint(){
-  if(scaleIndex>=theoryNames.length)return;scaleHintRevealed=true;renderScaleProgress();
-  if(theoryKind==='degree')ui.scaleFeedback.textContent=`提示 · ${theoryNames[0]}`;
-  else if(scaleSequence.length){const expected=noteData(scaleSequence[scaleIndex]);ui.scaleFeedback.textContent=`提示 · 下一音 ${theoryNames[scaleIndex]}${expected.octave}`;}else ui.scaleFeedback.textContent=`提示 · 先弹根音 ${theoryNames[0]}`;
-  ui.scaleFeedback.className='feedback listening';
 }
 
 function handleScaleSilence(){
@@ -353,7 +346,7 @@ function restoreData(){
 restoreData();
 resetScale();
 ui.startButton.addEventListener('click',()=>running?stop():start());ui.deviceSelect.addEventListener('change',()=>{if(running)start(ui.deviceSelect.value);});ui.readyButton.addEventListener('click',startTimedQuestion);ui.pauseButton.addEventListener('click',togglePause);ui.nextButton.addEventListener('click',()=>{if(running&&!paused)newQuestion();});
-ui.fretboardTab.addEventListener('click',()=>switchModule('fretboard'));ui.theoryTab.addEventListener('click',()=>switchModule('theory'));ui.backHomeButton.addEventListener('click',showHome);ui.backTheoryButton.addEventListener('click',showTheoryHub);document.querySelectorAll('[data-theory-type]').forEach(button=>button.addEventListener('click',()=>openTheoryPractice(button.dataset.theoryType)));ui.resetScaleButton.addEventListener('click',()=>resetScale(true));ui.skipTheoryButton.addEventListener('click',()=>resetScale(false));ui.scaleHintButton.addEventListener('click',revealScaleHint);[ui.theoryType,ui.scaleKey,ui.triadType].forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="scaleString"],input[name="arpString"],input[name="scaleQuality"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="hintMode"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();ui.theoryOptionsSummary.textContent=ui.theoryOptionsSummary.textContent.replace(/(?:提示|不提示)$/,selected('hintMode')==='guided'?'提示':'不提示');renderScaleProgress();}));
+ui.fretboardTab.addEventListener('click',()=>switchModule('fretboard'));ui.theoryTab.addEventListener('click',()=>switchModule('theory'));ui.backHomeButton.addEventListener('click',showHome);ui.backTheoryButton.addEventListener('click',showTheoryHub);document.querySelectorAll('[data-theory-type]').forEach(button=>button.addEventListener('click',()=>openTheoryPractice(button.dataset.theoryType)));ui.resetScaleButton.addEventListener('click',()=>resetScale(true));ui.skipTheoryButton.addEventListener('click',()=>resetScale(false));[ui.theoryType,ui.scaleKey,ui.triadType].forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="scaleString"],input[name="arpString"],input[name="scaleQuality"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="hintMode"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();ui.theoryOptionsSummary.textContent=ui.theoryOptionsSummary.textContent.replace(/(?:提示|不提示)$/,selected('hintMode')==='guided'?'提示':'不提示');renderScaleProgress();}));
 ui.wrongBankButton.addEventListener('click',startWrongPractice);ui.exitWrongButton.addEventListener('click',exitWrongPractice);ui.wrongPracticeDialog.addEventListener('cancel',event=>{event.preventDefault();exitWrongPractice();});
 document.querySelectorAll('input[name="stringMode"]').forEach(input=>input.addEventListener('change',()=>{ui.stringPicker.classList.toggle('hidden',selected('stringMode')==='mixed');questionDeck=[];saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
 document.querySelectorAll('input[name="bassString"],input[name="noteSet"],input[name="octaveMode"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
