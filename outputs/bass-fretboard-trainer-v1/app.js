@@ -2,8 +2,8 @@ import { detectPitch, frequencyToNote } from '../bass-fretboard-trainer-v0/pitch
 
 const $ = id => document.getElementById(id);
 const ui = Object.fromEntries([
-  'homeView','practiceWorkspace','backHomeButton','workspaceTitle','audioControls','diagnosticPanel','deviceSelect','startButton','deviceStatus','stringPicker','fretCount','fretboardTab','theoryTab','fretboardModule','fretboardOptionsSummary','theoryModule','theoryHub','theoryPractice','backTheoryButton','theoryPracticeTitle','wrongBankButton','wrongCount','wrongPracticeDialog','wrongPracticeBody','wrongPracticeRemaining','quizHome','quizCard',
-  'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','scaleQualityRow','theoryKeyLabel','scaleKey','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
+  'homeView','practiceWorkspace','backHomeButton','workspaceTitle','audioControls','diagnosticPanel','deviceSelect','startButton','deviceStatus','stringPicker','fretCount','fretboardTab','theoryTab','fretboardModule','fretboardOptionsSummary','fretboardCoverage','theoryModule','theoryHub','theoryPractice','backTheoryButton','theoryPracticeTitle','wrongBankButton','wrongCount','wrongPracticeDialog','wrongPracticeBody','wrongPracticeRemaining','quizHome','quizCard',
+  'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','theoryCoverage','scaleQualityRow','theoryKeyLabel','scaleKey','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
 ].map(id => [id,$(id)]));
 const SHARPS=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const FLATS=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
@@ -39,6 +39,7 @@ const TONICS={
 };
 let theoryNames=[],theoryIntervals=[],theoryLabel='',theoryKind='scale',theoryQuality='major',theoryDegree=3;
 let previousDegree='',previousTriad='',currentTriadKind='major';
+const coverageByConfiguration=new Map();
 const theorySessionSettings={
   scale:{scaleQuality:'major',scaleKey:'random',scaleString:'mixed',hintMode:'memory'},
   interval:{scaleKey:'random',hintMode:'memory'},
@@ -51,6 +52,46 @@ const choose = (name,value) => {const input=document.querySelector(`input[name="
 const noteData = midi => ({midi,pc:(midi%12+12)%12,sharp:SHARPS[(midi%12+12)%12],flat:FLATS[(midi%12+12)%12],octave:Math.floor(midi/12)-1});
 const questionKey = item => `${item.string}-${item.exact?item.midi:item.pc}`;
 const wrongKey = item => `${item.string}|${item.exact?'exact':'ignore'}|${item.exact?item.midi:item.pc}`;
+const theoryQuestionKey = item => item.kind?`${item.key}|${item.string}|${item.kind}`:item.degree?`${item.key}|${item.degree}`:`${item.key}|${item.string}`;
+
+function uniqueBy(items,keyFor){const seen=new Set();return items.filter(item=>{const key=keyFor(item);if(seen.has(key))return false;seen.add(key);return true;});}
+function coverageState(configurationKey,candidates,keyFor){
+  const unique=uniqueBy(candidates,keyFor),validIds=new Set(unique.map(keyFor));let state=coverageByConfiguration.get(configurationKey);
+  if(!state){state={seen:new Set()};coverageByConfiguration.set(configurationKey,state);}
+  for(const id of [...state.seen])if(!validIds.has(id))state.seen.delete(id);
+  return {state,unique,unseen:unique.filter(item=>!state.seen.has(keyFor(item)))};
+}
+function coverageText(seen,total){return `覆盖 ${seen} / ${total}${total>0&&seen===total?' ✓':''}`;}
+
+function fretboardConfigurationKey(){
+  const stringMode=selected('stringMode');return JSON.stringify(['fretboard',stringMode,stringMode==='single'?selected('bassString'):'all',selected('noteSet'),selected('octaveMode'),ui.fretCount.value]);
+}
+function fretboardCoverageContext(){return coverageState(fretboardConfigurationKey(),buildCandidates(),questionKey);}
+function updateFretboardCoverage(){const {state,unique}=fretboardCoverageContext();ui.fretboardCoverage.textContent=coverageText(state.seen.size,unique.length);}
+function markFretboardCovered(){if(practiceMode!=='normal'||!target)return;const {state}=fretboardCoverageContext();state.seen.add(questionKey(target));updateFretboardCoverage();}
+
+function theoryConfigurationKey(type=ui.theoryType.value){
+  const parts=['theory',type,ui.fretCount.value,ui.scaleKey.value];
+  if(type==='scale')parts.push(selected('scaleQuality'),selected('scaleString'));
+  else if(type==='degree')parts.push(selected('scaleQuality'));
+  else if(type==='triad')parts.push(selected('arpString'),ui.triadType.value);
+  return JSON.stringify(parts);
+}
+function buildTheoryCoverageCandidates(type=ui.theoryType.value){
+  const keyOptions=ui.scaleKey.value==='random'?Object.keys(TONICS):[ui.scaleKey.value];
+  if(type==='degree')return keyOptions.flatMap(key=>canCompleteFromString(key,'E',0)?['2','3','4','5','6','7'].map(degree=>({key,string:'E',degree})):[]);
+  const stringMode=type==='scale'?selected('scaleString'):type==='triad'?selected('arpString'):'E';
+  const stringOptions=stringMode==='mixed'?(type==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode],maxSpan=type==='scale'?12:24;
+  const pairs=[];for(const key of keyOptions)for(const string of stringOptions)if(canCompleteFromString(key,string,maxSpan))pairs.push({key,string});
+  if(type!=='triad')return pairs;
+  const kinds=ui.triadType.value==='random'?['major','minor']:[ui.triadType.value];return pairs.flatMap(pair=>kinds.map(kind=>({...pair,kind})));
+}
+function theoryCoverageContext(type=ui.theoryType.value){return coverageState(theoryConfigurationKey(type),buildTheoryCoverageCandidates(type),theoryQuestionKey);}
+function updateTheoryCoverage(){const {state,unique}=theoryCoverageContext();ui.theoryCoverage.textContent=coverageText(state.seen.size,unique.length);}
+function markTheoryCovered(){
+  const current={key:scaleExerciseKey,string:scaleExerciseString};if(theoryKind==='degree')current.degree=String(theoryDegree);if(theoryKind==='triad')current.kind=currentTriadKind;
+  const {state}=theoryCoverageContext(theoryKind);state.seen.add(theoryQuestionKey(current));updateTheoryCoverage();
+}
 
 function shuffle(items){
   const result=[...items];
@@ -101,6 +142,7 @@ function drawQuestion(){
     if(!wrongQueue.length)wrongQueue=shuffle(wrongBank.map(item=>({...item})));
     return wrongQueue.pop();
   }
+  const coverage=fretboardCoverageContext();if(coverage.unseen.length)return randomChoice(coverage.unseen);
   const signature=[selected('stringMode'),selected('bassString'),selected('noteSet'),selected('octaveMode'),ui.fretCount.value].join('|');
   if(signature!==deckSignature||!questionDeck.length){deckSignature=signature;questionDeck=buildAdaptiveDeck(buildCandidates());}
   if(questionDeck.length>1&&questionKey(questionDeck.at(-1))===previousKey)[questionDeck[questionDeck.length-1],questionDeck[questionDeck.length-2]]=[questionDeck[questionDeck.length-2],questionDeck[questionDeck.length-1]];
@@ -169,7 +211,7 @@ function resetScale(keepExercise=false){
   clearTimeout(scaleAdvanceTimer);scaleAdvanceTimer=null;
   scaleIndex=0;scaleRootMidi=null;scaleSequence=[];scaleArmed=false;scaleLastMidi=null;scaleStable=0;scaleAcceptedMidi=null;scaleAcceptedAt=0;scaleHintRevealed=false;releaseFrames=0;
   updateTheorySettings();theoryKind=ui.theoryType.value;theoryQuality=selected('scaleQuality');
-  const keyMode=ui.scaleKey.value,stringMode=theoryKind==='scale'?selected('scaleString'):theoryKind==='triad'?selected('arpString'):'E',keyOptions=keepExercise?[scaleExerciseKey]:keyMode==='random'?Object.keys(TONICS):[keyMode],stringOptions=keepExercise?[scaleExerciseString]:stringMode==='mixed'?(theoryKind==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode],maxSpan=theoryKind==='scale'?12:theoryKind==='degree'?0:24;
+  const keyMode=ui.scaleKey.value,stringMode=theoryKind==='scale'?selected('scaleString'):theoryKind==='triad'?selected('arpString'):'E',coverage=theoryCoverageContext(theoryKind),coveragePick=!keepExercise&&coverage.unseen.length?randomChoice(coverage.unseen):null,keyOptions=keepExercise?[scaleExerciseKey]:coveragePick?[coveragePick.key]:keyMode==='random'?Object.keys(TONICS):[keyMode],stringOptions=keepExercise?[scaleExerciseString]:coveragePick?[coveragePick.string]:stringMode==='mixed'?(theoryKind==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode],maxSpan=theoryKind==='scale'?12:theoryKind==='degree'?0:24;
   let pairs=[];for(const key of keyOptions)for(const string of stringOptions)if(canCompleteFromString(key,string,maxSpan))pairs.push({key,string});
   if((keyMode==='random'||stringMode==='mixed')&&pairs.length){const fresh=keyMode==='random'?pairs.filter(pair=>pair.key!==previousScaleKey):pairs.filter(pair=>pair.string!==previousScaleString);const pair=randomChoice(fresh.length?fresh:pairs);scaleExerciseKey=pair.key;scaleExerciseString=pair.string;}
   else{scaleExerciseKey=keyMode==='random'?randomChoice(keyOptions,previousScaleKey):keyMode;scaleExerciseString=stringMode==='mixed'?randomChoice(stringOptions,previousScaleString):stringMode;}
@@ -178,12 +220,13 @@ function resetScale(keepExercise=false){
   if(theoryKind==='scale'){
     const base=theoryQuality==='major'?MAJOR_INTERVALS:MINOR_INTERVALS;theoryIntervals=[...base,...base.slice(1,-1).reverse(),0];theoryNames=[...tonic.notes,...tonic.notes.slice(0,-1).reverse()];theoryLabel=`${tonic.label} ${theoryQuality==='major'?'大调':'自然小调'}`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='上行一个八度，再下行返回';
   }else if(theoryKind==='degree'){
-    theoryDegree=keepExercise?theoryDegree:Number(randomChoice(['2','3','4','5','6','7'],previousDegree));previousDegree=String(theoryDegree);const base=theoryQuality==='major'?MAJOR_INTERVALS:MINOR_INTERVALS;theoryIntervals=[base[theoryDegree-1]];theoryNames=[tonic.notes[theoryDegree-1]];theoryLabel=`${tonic.label} ${theoryQuality==='major'?'大调':'自然小调'}的第 ${theoryDegree} 音`;ui.scalePrompt.textContent='请在任意位置弹出';ui.scaleDirectionText.textContent='只判断音名，不限制八度';scaleSequence=[(Number(scaleExerciseKey)+theoryIntervals[0])%12];
+    theoryDegree=keepExercise?theoryDegree:coveragePick?Number(coveragePick.degree):Number(randomChoice(['2','3','4','5','6','7'],previousDegree));previousDegree=String(theoryDegree);const base=theoryQuality==='major'?MAJOR_INTERVALS:MINOR_INTERVALS;theoryIntervals=[base[theoryDegree-1]];theoryNames=[tonic.notes[theoryDegree-1]];theoryLabel=`${tonic.label} ${theoryQuality==='major'?'大调':'自然小调'}的第 ${theoryDegree} 音`;ui.scalePrompt.textContent='请在任意位置弹出';ui.scaleDirectionText.textContent='只判断音名，不限制八度';scaleSequence=[(Number(scaleExerciseKey)+theoryIntervals[0])%12];
   }else if(theoryKind==='interval'){
     tonic=TONICS[scaleExerciseKey].major;theoryIntervals=[0,7,12,19,24];theoryNames=[tonic.notes[0],tonic.notes[4],tonic.notes[7],tonic.notes[4],tonic.notes[7]];theoryLabel=`${tonic.label} 根音—五度音型`;ui.scalePrompt.textContent=`从 E 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='跨四弦上行两个八度';
   }else{
-    const kind=keepExercise?currentTriadKind:ui.triadType.value==='random'?randomChoice(['major','minor'],previousTriad):ui.triadType.value;currentTriadKind=kind;previousTriad=kind;tonic=TONICS[scaleExerciseKey][kind];theoryIntervals=kind==='major'?[0,4,7,12,16,19,24]:[0,3,7,12,15,19,24];theoryNames=[tonic.notes[0],tonic.notes[2],tonic.notes[4],tonic.notes[7],tonic.notes[2],tonic.notes[4],tonic.notes[7]];theoryLabel=`${tonic.label} ${kind==='major'?'大':'小'}三和弦琶音`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='连续上行两个八度';
+    const kind=keepExercise?currentTriadKind:coveragePick?coveragePick.kind:ui.triadType.value==='random'?randomChoice(['major','minor'],previousTriad):ui.triadType.value;currentTriadKind=kind;previousTriad=kind;tonic=TONICS[scaleExerciseKey][kind];theoryIntervals=kind==='major'?[0,4,7,12,16,19,24]:[0,3,7,12,15,19,24];theoryNames=[tonic.notes[0],tonic.notes[2],tonic.notes[4],tonic.notes[7],tonic.notes[2],tonic.notes[4],tonic.notes[7]];theoryLabel=`${tonic.label} ${kind==='major'?'大':'小'}三和弦琶音`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='连续上行两个八度';
   }
+  updateTheoryCoverage();
   const hintLabel=selected('hintMode')==='guided'?'提示':'不提示',keyLabel=keyMode==='random'?'随机调/根音':tonic.label;
   if(theoryKind==='scale')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${keyLabel} · ${stringMode==='mixed'?'随机弦':stringMode+' 弦'} · ${hintLabel}`;
   else if(theoryKind==='degree')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${keyLabel} · 随机级数 · ${hintLabel}`;
@@ -196,6 +239,7 @@ function handleScalePitch(midi){
   if(scaleIndex>=theoryNames.length)return;
   if(!scaleArmed){if(midi===scaleAcceptedMidi||performance.now()-scaleAcceptedAt<100)return;scaleArmed=true;scaleLastMidi=null;scaleStable=0;}
   if(midi===scaleLastMidi)scaleStable++;else{scaleLastMidi=midi;scaleStable=1;}if(scaleStable<4)return;
+  markTheoryCovered();
   scaleArmed=false;scaleStable=0;scaleAcceptedMidi=midi;scaleAcceptedAt=performance.now();releaseFrames=0;const heard=noteData(midi),startString=scaleExerciseString,fret=midi-STRINGS[startString],highestMidi=STRINGS.G+Number(ui.fretCount.value);
   if(theoryKind==='degree'){
     if(heard.pc!==scaleSequence[0]){ui.scaleFeedback.textContent=`再试一次 · 你弹了 ${heard.sharp}${heard.octave}`;ui.scaleFeedback.className='feedback wrong';return;}
@@ -296,6 +340,7 @@ function normalizeMidiForTargetString(midi){
 function judge(midi){
   if(!armed||completed)return;midi=normalizeMidiForTargetString(midi);const heard=noteData(midi);
   if(midi===lastMidi)stableCount++;else{lastMidi=midi;stableCount=1;}ui.stableFrames.textContent=`${Math.min(stableCount,4)} / 4`;if(stableCount<4)return;
+  markFretboardCovered();
   const correct=target.exact?midi===target.midi:heard.pc===target.pc;armed=false;stableCount=0;releaseFrames=0;
   if(correct){const struggled=wrongCountForQuestion>0;completed=true;wrongAnswer=false;recordAttempt('correct',midi);if(practiceMode==='wrong'&&wrongCountForQuestion===0)removeWrong(target);score++;ui.score.textContent=score;ui.feedback.textContent=`正确 · ${heard.sharp}${heard.octave}`;ui.feedback.className='feedback correct';ui.heard.textContent=practiceMode==='wrong'&&wrongCountForQuestion>0?'本题继续保留在错题库':'';registerTimedOutcome(struggled);}
   else{wrongAnswer=true;wrongCountForQuestion++;recordAttempt('wrong',midi);if(wrongCountForQuestion>=2)addWrong(target);ui.feedback.textContent=`再试一次 · 你弹了 ${heard.sharp}${heard.octave}`;ui.feedback.className='feedback wrong';ui.heard.textContent='请再次弹奏';}
@@ -335,7 +380,7 @@ function exitWrongPractice(){
 }
 
 function updateFretboardSummary(){
-  const stringLabel=selected('stringMode')==='mixed'?'混合弦':`单弦 ${selected('bassString')}`,noteLabel=selected('noteSet')==='natural'?'仅自然音':'包含升降音',octaveLabel=selected('octaveMode')==='exact'?'区分八度':'不区分八度',time=selected('timeLimit');ui.fretboardOptionsSummary.textContent=`${stringLabel} · ${noteLabel} · ${octaveLabel} · ${time==='0'?'不限时':time+' 秒'}`;
+  const stringLabel=selected('stringMode')==='mixed'?'混合弦':`单弦 ${selected('bassString')}`,noteLabel=selected('noteSet')==='natural'?'仅自然音':'包含升降音',octaveLabel=selected('octaveMode')==='exact'?'区分八度':'不区分八度',time=selected('timeLimit');ui.fretboardOptionsSummary.textContent=`${stringLabel} · ${noteLabel} · ${octaveLabel} · ${time==='0'?'不限时':time+' 秒'}`;updateFretboardCoverage();
 }
 function saveSettings(){updateFretboardSummary();if(!ui.theoryPractice.hidden)captureTheorySettings();}
 function restoreData(){

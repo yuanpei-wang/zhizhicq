@@ -69,6 +69,7 @@ body.in-practice .shell { padding-bottom:10px; }
 .fretboard-options[open]>summary { border-bottom:1px solid #2a2f2a; }
 .fretboard-options .settings { margin:0; padding:0; }
 .practice-sidebar .setting-row { align-items:flex-start; flex-direction:column; gap:9px; padding:12px 0; }
+.coverage-status { padding:12px 0 14px; border-top:1px solid #2a2f2a; color:#aeb6aa; font-size:13px; font-weight:700; text-align:center; }
 .practice-sidebar .choice { width:100%; }
 .practice-sidebar .choice label { flex:1; }
 .practice-sidebar .choice span { text-align:center; padding-left:7px; padding-right:7px; }
