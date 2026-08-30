@@ -295,3 +295,127 @@ body.in-practice .home-setup-bar.compact .bass-setup-copy { display:none; }
 @media(prefers-reduced-motion:reduce) {
   .practice-entry,.practice-entry-arrow,.practice-entry-description,.top-nav-link::after { transition:none; }
 }
+
+/* Fretboard practice — reuses the confirmed home editorial system. */
+body.in-practice:has(#fretboardModule:not([hidden])) {
+  background:#f7f7f4;
+  color:#141413;
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+}
+body.in-practice:has(#fretboardModule:not([hidden])) .shell { width:min(1420px,calc(100% - 64px)); margin:0 auto; padding:0; }
+body.in-practice:has(#fretboardModule:not([hidden])) .site-header { min-height:88px; margin:0; border-bottom:1px solid #e8e6dd; }
+body.in-practice:has(#fretboardModule:not([hidden])) .site-header .home-brand { display:none; }
+body.in-practice:has(#fretboardModule:not([hidden])) .site-header .top-nav { display:flex; }
+.practice-brand-title { display:none; }
+body.in-practice:has(#fretboardModule:not([hidden])) .practice-brand-title { display:inline-flex; align-items:center; gap:11px; color:#141413; text-decoration:none; font-size:25px; font-weight:600; letter-spacing:-.02em; }
+.practice-brand-mark { width:35px; height:35px; overflow:visible; }
+.practice-brand-mark path { fill:#683c95; }
+body.in-practice:has(#fretboardModule[hidden]) .practice-brand-mark { display:none; }
+
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-rows:auto; align-items:center; gap:18px; min-height:74px; margin:0; padding:12px 0; border:0; border-bottom:1px solid #e8e6dd; border-radius:0; background:transparent; box-shadow:none; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .setup-main { display:flex; flex:initial; align-items:center; gap:14px; min-width:0; }
+body.in-practice:has(#fretboardModule:not([hidden])) #startButton { flex:0 0 auto; min-height:38px; padding:0 17px; border:1px solid #141413; border-radius:7px; background:#141413; color:#fff; font-size:13px; font-weight:600; }
+body.in-practice:has(#fretboardModule:not([hidden])) #startButton.stop { border-color:#141413; background:transparent; color:#141413; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .device-field { flex:0 1 430px; min-width:190px; }
+body.in-practice:has(#fretboardModule:not([hidden])) #deviceSelect { width:100%; min-height:42px; padding:0 42px 0 15px; border:1px solid #e2e0d8; border-radius:9px; background-color:transparent; color:#5f5e59; font-size:13px; font-weight:400; appearance:auto; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .status { flex:0 0 auto; max-width:none; margin:0; color:#88867f; font-size:12px; white-space:nowrap; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .dot { width:6px; height:6px; margin-right:6px; background:#aaa8a1; box-shadow:none; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .status.active .dot { background:#683c95; box-shadow:none; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .diagnostic-panel { display:block; position:relative; flex:0 0 auto; margin:0; color:#85837d; font-size:12px; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .diagnostic-panel summary { color:#77756f; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .diagnostic-panel .diagnostics { position:absolute; z-index:5; top:28px; right:0; width:330px; margin:0; border:1px solid #e2e0d8; border-radius:8px; background:#f7f7f4; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .diagnostics div { background:#f3f1ec; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .bass-setup-copy { display:inline-flex; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .instrument-config { display:block; flex:initial; grid-column:auto; grid-row:auto; margin:0; padding:0; border:0; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .compact-select { width:104px; min-width:104px; min-height:40px; padding:0 12px; border:1px solid #e2e0d8; border-radius:7px; background:transparent; color:#141413; font-size:13px; }
+body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .privacy { display:none; }
+
+body.in-practice .workspace-bar { display:none; }
+#fretboardModule { padding:clamp(28px,3vw,42px) 0 0; }
+#fretboardModule .practice-grid { grid-template-columns:minmax(280px,340px) minmax(0,1fr); align-items:center; gap:clamp(38px,5vw,76px); }
+#fretboardModule .practice-sidebar,#fretboardModule .practice-main { min-width:0; }
+#fretboardModule .fretboard-options { margin:0; padding:18px; border:0; border-radius:12px; background:#f2f2ef; box-shadow:none; }
+#fretboardModule .fretboard-options>summary { padding:0 0 12px; border:0; color:#141413; font-size:17px; font-weight:600; cursor:pointer; }
+#fretboardModule .fretboard-options>summary small { max-width:68%; color:#5f5e59; font-size:12px; font-weight:400; }
+#fretboardModule .fretboard-options[open]>summary { border:0; }
+#fretboardModule .fretboard-options .settings { margin:0; padding:0; }
+#fretboardModule .setting-row { gap:10px; padding:12px 0; border-bottom:0; }
+#fretboardModule .setting-row strong { color:#141413; font-size:14px; font-weight:500; }
+#fretboardModule .setting-row small { margin-top:5px; color:#5f5e59; font-size:12px; font-weight:400; }
+#fretboardModule .settings-group-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:16px 0 0; padding:18px 0 2px; border-top:1px solid #e1e1dc; }
+#fretboardModule .settings-group-heading strong { color:#141413; font-size:17px; font-weight:600; }
+#fretboardModule .settings-group-heading small { color:#5f5e59; font-size:12px; font-weight:400; text-align:right; }
+#fretboardModule .choice,#fretboardModule .string-picker { padding:3px; border:1px solid #e1e1dc; border-radius:9px; background:#ecece8; }
+#fretboardModule .choice span,#fretboardModule .string-picker span { border-radius:6px; color:#5f5e59; font-weight:400; }
+#fretboardModule .choice input:checked+span,#fretboardModule .string-picker input:checked+span { background:#e3e3de; color:#141413; box-shadow:none; }
+#fretboardModule .string-picker { margin:0 0 5px; }
+#fretboardModule .wrong-bank-button { display:none; }
+
+#fretboardModule .practice-main .quiz { min-height:520px; padding:26px clamp(24px,4vw,58px) 32px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+#fretboardModule .scorebar { color:#5f5e59; font-size:13px; font-weight:400; }
+#fretboardModule .scorebar strong { color:#141413; font-weight:600; }
+#fretboardModule .prompt { margin:70px 0 12px; color:#141413; font-size:clamp(22px,2.1vw,30px); font-weight:500; line-height:1.35; }
+#fretboardModule .target-note { color:#683c95; font-size:clamp(120px,17vw,210px); font-weight:700; line-height:.88; }
+#fretboardModule .enharmonic { color:#5f5e59; }
+#fretboardModule .octave { margin:15px 0 32px; color:#5f5e59; font-size:14px; font-weight:400; }
+#fretboardModule .feedback { min-width:180px; padding:10px 17px; border-radius:8px; font-weight:600; cursor:default; box-shadow:none; }
+#fretboardModule .feedback.waiting { color:#5f5e59; background:#f3f1ec; }
+#fretboardModule .feedback.listening { color:#5f5e59; background:#d8cee6; }
+#fretboardModule .feedback.correct { color:#fff; background:#683c95; }
+#fretboardModule .feedback.wrong { color:#fff; background:#b84a5a; }
+#fretboardModule .heard { color:#5f5e59; }
+#fretboardModule .quiz-actions { flex-wrap:wrap; }
+#fretboardModule .quiz-actions .secondary { min-height:38px; padding:0 16px; border:1px solid #e2e0d8; border-radius:7px; background:transparent; color:#141413; font-size:14px; font-weight:500; line-height:1.2; box-shadow:none; }
+#fretboardModule .quiz-actions .secondary:hover:not(:disabled),#fretboardModule .quiz-actions .secondary:focus-visible:not(:disabled) { border-color:#c9c7bf; background:#f3f1ec; }
+#fretboardModule .quiz-actions .secondary:disabled { color:#5f5e59; opacity:.4; }
+#fretboardModule .coverage-status { margin-top:20px; padding:0; border:0; color:#5f5e59; font-size:12px; font-weight:500; line-height:1.4; text-align:right; opacity:.4; }
+.practice-footer { padding:clamp(58px,8vw,96px) 0 28px; color:#88867f; font-size:12px; font-weight:500; letter-spacing:.08em; text-align:center; }
+
+@media(max-width:980px) {
+  body.in-practice:has(#fretboardModule:not([hidden])) .shell { width:min(100% - 40px,940px); }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact { grid-template-columns:minmax(0,1fr) auto; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .setup-main { flex-wrap:wrap; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .bass-setup-copy { display:none; }
+  #fretboardModule .practice-grid { grid-template-columns:minmax(250px,300px) minmax(0,1fr); gap:32px; }
+}
+@media(max-width:800px) {
+  body.in-practice:has(#fretboardModule:not([hidden])) .shell { width:calc(100% - 32px); }
+  body.in-practice:has(#fretboardModule:not([hidden])) .site-header { min-height:72px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .practice-brand-title { font-size:21px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .practice-brand-mark { width:30px; height:30px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .top-nav-link[data-home-action="home"] { display:none; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact { grid-template-columns:1fr auto; align-items:start; padding:14px 0; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .setup-main { gap:10px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .device-field { flex:1 1 230px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .status { order:4; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .diagnostic-panel { order:5; }
+  #fretboardModule { padding-top:32px; }
+  #fretboardModule .practice-grid { grid-template-columns:1fr; align-items:start; gap:54px; }
+  #fretboardModule .practice-main .quiz { min-height:500px; }
+}
+@media(max-width:520px) {
+  body.in-practice:has(#fretboardModule:not([hidden])) .shell { width:calc(100% - 28px); }
+  body.in-practice:has(#fretboardModule:not([hidden])) .site-header { align-items:flex-start; flex-wrap:wrap; align-content:start; row-gap:9px; min-height:104px; padding:17px 0 12px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .site-header .top-nav { display:grid; flex:1 0 100%; grid-template-columns:repeat(3,auto); gap:8px 14px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact { display:grid; grid-template-columns:1fr auto; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .setup-main { display:grid; grid-column:1 / -1; grid-template-columns:auto minmax(0,1fr); }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .device-field { min-width:0; }
+  body.in-practice:has(#fretboardModule:not([hidden])) #deviceSelect { min-width:0; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .status,body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar .diagnostic-panel { margin-top:5px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .instrument-config { grid-column:2; margin-top:2px; }
+  body.in-practice:has(#fretboardModule:not([hidden])) .home-setup-bar.compact .bass-setup-copy { display:flex; grid-column:1; align-self:center; }
+  #fretboardModule { padding-top:28px; }
+  #fretboardModule .fretboard-options { padding:14px; }
+  #fretboardModule .fretboard-options>summary { align-items:flex-start; flex-direction:column; gap:7px; }
+  #fretboardModule .fretboard-options>summary small { max-width:none; text-align:left; }
+  #fretboardModule .settings-group-heading { align-items:flex-start; flex-direction:column; gap:5px; }
+  #fretboardModule .settings-group-heading small { text-align:left; }
+  #fretboardModule .choice,#fretboardModule .string-picker { max-width:100%; }
+  #fretboardModule .choice span,#fretboardModule .string-picker span { padding-right:6px; padding-left:6px; }
+  #fretboardModule .practice-main .quiz { min-height:460px; padding:22px 0 28px; }
+  #fretboardModule .prompt { margin-top:54px; font-size:22px; }
+  #fretboardModule .target-note { font-size:clamp(112px,42vw,164px); }
+  #fretboardModule .feedback { max-width:100%; min-width:0; }
+  #fretboardModule .quiz-actions { align-items:stretch; flex-direction:column; }
+  #fretboardModule .quiz-actions .secondary { width:100%; }
+}

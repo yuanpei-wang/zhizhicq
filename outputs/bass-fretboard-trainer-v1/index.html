@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="home-layout-tuning.css" />
   <script src="home-layout-tuning.js" defer></script>
-  <script src="home-ui.js" defer></script>
+  <script src="home-ui.js?v=20260830-1" defer></script>
   <script src="bass-motion.js" defer></script>
 </head>
 <body>
@@ -21,7 +21,12 @@
         </svg>
         <span>吱吱cq</span>
       </a>
-      <h1 class="practice-brand-title">贝斯指板练习</h1>
+      <h1 class="practice-brand-title">
+        <svg class="practice-brand-mark" viewBox="870 575 195 185" aria-hidden="true">
+          <path d="M882,641C883.3,634.6 891.2,614.4 894,609C896.8,603.6 902.2,598.5 905,596C907.8,593.5 912.2,589.8 917,588C921.8,586.2 939,581.7 945,581C951,580.3 965.4,580 974,583C980.2,582.2 1001.8,587.6 1010,591C1018.2,594.4 1036.8,606 1042,611C1047.2,616 1051.8,628.3 1053,633C1054.2,637.7 1053.2,645.8 1052,650C1050.8,654.2 1048.4,662.5 1043,668C1037.6,673.5 1013.2,688.1 1007,696C1000.8,703.9 995.2,727.9 991,734C986.8,740.1 977.8,746 972,747C966.2,748 950.1,745.6 943,742C935.9,738.4 919.2,723.8 913,717C906.8,710.2 894.6,691.6 891,685C887.4,678.4 884.1,667.3 883,662C881.9,656.7 880.7,647.4 882,641Z" />
+        </svg>
+        <span>贝斯指板练习</span>
+      </h1>
       <nav class="top-nav" aria-label="主导航">
         <button class="top-nav-link is-active" type="button" data-home-action="home">首页</button>
         <button class="top-nav-link" type="button" data-home-action="fretboard">指板练习</button>
@@ -84,16 +89,16 @@
     </section>
 
     <section id="practiceWorkspace" hidden>
-      <div class="workspace-bar"><button id="backHomeButton" class="back-button">← 返回首页</button><strong id="workspaceTitle">指板练习</strong></div>
+      <div class="workspace-bar" hidden><button id="backHomeButton" class="back-button">← 返回首页</button><strong id="workspaceTitle">指板练习</strong></div>
 
     <section id="fretboardModule">
     <div class="practice-grid">
     <aside class="practice-sidebar">
-    <details class="card fretboard-options">
-      <summary><span>题目设置</span><small id="fretboardOptionsSummary">单弦 E · 仅自然音 · 不区分八度 · 不限时</small></summary>
+    <details class="card fretboard-options" open>
+      <summary><span>训练范围</span><small id="fretboardOptionsSummary">单弦 E · 仅自然音</small></summary>
     <section class="settings" aria-label="练习设置">
       <div class="setting-row">
-        <div><strong>练习弦</strong><small>专注一根弦，或每题随机换弦</small></div>
+        <div><strong>练习弦</strong></div>
         <div class="choice">
           <label><input type="radio" name="stringMode" value="single" checked><span>单弦</span></label>
           <label><input type="radio" name="stringMode" value="mixed"><span>混合弦</span></label>
@@ -106,12 +111,13 @@
         <label><input type="radio" name="bassString" value="G"><span>G</span></label>
       </div>
       <div class="setting-row">
-        <div><strong>出题音符</strong><small>“包含升降音”也会出现 C♯、D♯、F♯等</small></div>
+        <div><strong>是否包含升降调</strong></div>
         <div class="choice">
           <label><input type="radio" name="noteSet" value="natural" checked><span>仅自然音</span></label>
           <label><input type="radio" name="noteSet" value="chromatic"><span>包含升降音</span></label>
         </div>
       </div>
+      <div class="settings-group-heading"><strong>其他设置</strong><small id="fretboardChallengeSummary">不区分八度 · 不限时</small></div>
       <div class="setting-row">
         <div><strong>八度判定</strong><small>开启后必须区分 G2、G3等实际音高</small></div>
         <div class="choice">
@@ -120,7 +126,7 @@
         </div>
       </div>
       <div class="setting-row">
-        <div><strong>答题时间</strong><small>超时单独记录，不算作弹错</small></div>
+        <div><strong>答题时间</strong><small>超时不记入错题库</small></div>
         <div class="choice">
           <label><input type="radio" name="timeLimit" value="0" checked><span>不限时</span></label>
           <label><input type="radio" name="timeLimit" value="5"><span>5 秒</span></label>
@@ -129,9 +135,7 @@
       </div>
     </section>
     </details>
-    <div id="fretboardCoverage" class="coverage-status">覆盖 0 / 0</div>
-
-    <button id="wrongBankButton" class="wrong-bank-button">错题库 <span id="wrongCount">0</span></button>
+    <button id="wrongBankButton" class="wrong-bank-button" hidden>错题库 <span id="wrongCount">0</span></button>
     </aside>
 
     <div class="practice-main">
@@ -155,8 +159,10 @@
         <button id="nextButton" class="secondary" disabled>跳过本题</button>
       </div>
     </section>
+    <div id="fretboardCoverage" class="coverage-status">覆盖 0 / 0</div>
     </div>
     </div>
+    <footer class="practice-footer">@吱吱cq</footer>
     </section>
 
     <section id="theoryModule" hidden>
@@ -255,6 +261,6 @@
       <button id="continueTimedButton" class="secondary">继续计时练习</button>
     </div>
   </dialog>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20260830-1"></script>
 </body>
 </html>

@@ -10,6 +10,19 @@
   };
   document.querySelectorAll('[data-home-action]').forEach(button=>button.addEventListener('click',()=>actions[button.dataset.homeAction]?.()));
 
+  const navButtons=[...document.querySelectorAll('.top-nav-link[data-home-action]')];
+  const fretboardModule=document.getElementById('fretboardModule'),theoryModule=document.getElementById('theoryModule'),wrongDialog=document.getElementById('wrongPracticeDialog');
+  const syncActiveNavigation=()=>{
+    const active=wrongDialog?.open?'wrong':document.body.classList.contains('in-practice')?(fretboardModule?.hidden?'theory':'fretboard'):'home';
+    navButtons.forEach(button=>button.classList.toggle('is-active',button.dataset.homeAction===active));
+  };
+  const activeObserver=new MutationObserver(syncActiveNavigation);
+  activeObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+  if(fretboardModule)activeObserver.observe(fretboardModule,{attributes:true,attributeFilter:['hidden']});
+  if(theoryModule)activeObserver.observe(theoryModule,{attributes:true,attributeFilter:['hidden']});
+  if(wrongDialog)activeObserver.observe(wrongDialog,{attributes:true,attributeFilter:['open']});
+  syncActiveNavigation();
+
   const sourceCount=document.getElementById('wrongCount'),headerCount=document.getElementById('headerWrongCount'),headerWrong=document.getElementById('headerWrongBank');
   const syncWrongCount=()=>{const count=sourceCount?.textContent||'0';if(headerCount)headerCount.textContent=count;if(headerWrong)headerWrong.disabled=count==='0';};
   if(sourceCount)new MutationObserver(syncWrongCount).observe(sourceCount,{childList:true,characterData:true,subtree:true});

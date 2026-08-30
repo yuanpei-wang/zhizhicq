@@ -2,7 +2,7 @@ import { detectPitch, frequencyToNote } from '../bass-fretboard-trainer-v0/pitch
 
 const $ = id => document.getElementById(id);
 const ui = Object.fromEntries([
-  'homeView','practiceWorkspace','backHomeButton','workspaceTitle','audioControls','diagnosticPanel','deviceSelect','startButton','deviceStatus','stringPicker','fretCount','fretboardTab','theoryTab','fretboardModule','fretboardOptionsSummary','fretboardCoverage','theoryModule','theoryHub','theoryPractice','backTheoryButton','theoryPracticeTitle','wrongBankButton','wrongCount','wrongPracticeDialog','wrongPracticeBody','wrongPracticeRemaining','quizHome','quizCard',
+  'homeView','practiceWorkspace','backHomeButton','workspaceTitle','audioControls','diagnosticPanel','deviceSelect','startButton','deviceStatus','stringPicker','fretCount','fretboardTab','theoryTab','fretboardModule','fretboardOptionsSummary','fretboardChallengeSummary','fretboardCoverage','theoryModule','theoryHub','theoryPractice','backTheoryButton','theoryPracticeTitle','wrongBankButton','wrongCount','wrongPracticeDialog','wrongPracticeBody','wrongPracticeRemaining','quizHome','quizCard',
   'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','theoryCoverage','scaleQualityRow','theoryKeyLabel','scaleKey','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
 ].map(id => [id,$(id)]));
 const SHARPS=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -302,7 +302,7 @@ function registerTimedOutcome(struggled){
 
 function resolveTimedSupport(switchToUntimed){
   if(!timeSupportPending)return;
-  if(switchToUntimed){const option=document.querySelector('input[name="timeLimit"][value="0"]');option.checked=true;timedSessionStarted=true;saveSettings();}
+  if(switchToUntimed){const option=document.querySelector('input[name="timeLimit"][value="0"]');option.checked=true;timedSessionStarted=true;updateFretboardChallengeSummary();updateFretboardCoverage();saveSettings();}
   timedStruggleStreak=0;timeSupportPending=false;ui.timeSupportDialog.close();round++;ui.round.textContent=round;newQuestion();
 }
 
@@ -379,10 +379,14 @@ function exitWrongPractice(){
   if(running){paused=false;ui.pauseButton.textContent='暂停练习';questionDeck=[];newQuestion();}else{ui.feedback.textContent='等待开始';ui.feedback.className='feedback waiting';}
 }
 
-function updateFretboardSummary(){
-  const stringLabel=selected('stringMode')==='mixed'?'混合弦':`单弦 ${selected('bassString')}`,noteLabel=selected('noteSet')==='natural'?'仅自然音':'包含升降音',octaveLabel=selected('octaveMode')==='exact'?'区分八度':'不区分八度',time=selected('timeLimit');ui.fretboardOptionsSummary.textContent=`${stringLabel} · ${noteLabel} · ${octaveLabel} · ${time==='0'?'不限时':time+' 秒'}`;updateFretboardCoverage();
+function updateFretboardRangeSummary(){
+  const stringLabel=selected('stringMode')==='mixed'?'混合弦':`单弦 ${selected('bassString')}`,noteLabel=selected('noteSet')==='natural'?'仅自然音':'包含升降音';ui.fretboardOptionsSummary.textContent=`${stringLabel} · ${noteLabel}`;
 }
-function saveSettings(){updateFretboardSummary();if(!ui.theoryPractice.hidden)captureTheorySettings();}
+function updateFretboardChallengeSummary(){
+  const octaveLabel=selected('octaveMode')==='exact'?'区分八度':'不区分八度',time=selected('timeLimit');ui.fretboardChallengeSummary.textContent=`${octaveLabel} · ${time==='0'?'不限时':time+' 秒'}`;
+}
+function updateFretboardSummary(){updateFretboardRangeSummary();updateFretboardChallengeSummary();updateFretboardCoverage();}
+function saveSettings(){if(!ui.theoryPractice.hidden)captureTheorySettings();}
 function restoreData(){
   try{wrongBank=JSON.parse(localStorage.getItem('bassTrainerWrongBank')||'[]');if(!Array.isArray(wrongBank))wrongBank=[];}catch{wrongBank=[];}
   ui.stringPicker.classList.toggle('hidden',selected('stringMode')==='mixed');updateWrongCount();updateFretboardSummary();
@@ -393,8 +397,9 @@ resetScale();
 ui.startButton.addEventListener('click',()=>running?stop():start());ui.deviceSelect.addEventListener('change',()=>{if(running)start(ui.deviceSelect.value);});ui.readyButton.addEventListener('click',startTimedQuestion);ui.pauseButton.addEventListener('click',togglePause);ui.nextButton.addEventListener('click',()=>{if(running&&!paused)newQuestion();});
 ui.fretboardTab.addEventListener('click',()=>switchModule('fretboard'));ui.theoryTab.addEventListener('click',()=>switchModule('theory'));ui.backHomeButton.addEventListener('click',showHome);ui.backTheoryButton.addEventListener('click',showTheoryHub);document.querySelectorAll('[data-theory-type]').forEach(button=>button.addEventListener('click',()=>openTheoryPractice(button.dataset.theoryType)));ui.resetScaleButton.addEventListener('click',()=>resetScale(true));ui.skipTheoryButton.addEventListener('click',()=>resetScale(false));[ui.theoryType,ui.scaleKey,ui.triadType].forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="scaleString"],input[name="arpString"],input[name="scaleQuality"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="hintMode"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();ui.theoryOptionsSummary.textContent=ui.theoryOptionsSummary.textContent.replace(/(?:提示|不提示)$/,selected('hintMode')==='guided'?'提示':'不提示');renderScaleProgress();}));
 ui.wrongBankButton.addEventListener('click',startWrongPractice);ui.exitWrongButton.addEventListener('click',exitWrongPractice);ui.wrongPracticeDialog.addEventListener('cancel',event=>{event.preventDefault();exitWrongPractice();});
-document.querySelectorAll('input[name="stringMode"]').forEach(input=>input.addEventListener('change',()=>{ui.stringPicker.classList.toggle('hidden',selected('stringMode')==='mixed');questionDeck=[];saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
-document.querySelectorAll('input[name="bassString"],input[name="noteSet"],input[name="octaveMode"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
-document.querySelectorAll('input[name="timeLimit"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];timedStruggleStreak=0;timedSessionStarted=selected('timeLimit')==='0';saveSettings();if(running&&!paused)newQuestion();}));
-ui.fretCount.addEventListener('change',()=>{questionDeck=[];saveSettings();if(activeModule==='theory')resetScale();else if(running&&!paused&&practiceMode==='normal')newQuestion();});navigator.mediaDevices?.addEventListener('devicechange',()=>listDevices(ui.deviceSelect.value));
+document.querySelectorAll('input[name="stringMode"]').forEach(input=>input.addEventListener('change',()=>{ui.stringPicker.classList.toggle('hidden',selected('stringMode')==='mixed');questionDeck=[];updateFretboardRangeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
+document.querySelectorAll('input[name="bassString"],input[name="noteSet"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];updateFretboardRangeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
+document.querySelectorAll('input[name="octaveMode"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];updateFretboardChallengeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
+document.querySelectorAll('input[name="timeLimit"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];timedStruggleStreak=0;timedSessionStarted=selected('timeLimit')==='0';updateFretboardChallengeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused)newQuestion();}));
+ui.fretCount.addEventListener('change',()=>{questionDeck=[];updateFretboardCoverage();saveSettings();if(activeModule==='theory')resetScale();else if(running&&!paused&&practiceMode==='normal')newQuestion();});navigator.mediaDevices?.addEventListener('devicechange',()=>listDevices(ui.deviceSelect.value));
 ui.switchUntimedButton.addEventListener('click',()=>resolveTimedSupport(true));ui.continueTimedButton.addEventListener('click',()=>resolveTimedSupport(false));ui.timeSupportDialog.addEventListener('cancel',event=>event.preventDefault());
