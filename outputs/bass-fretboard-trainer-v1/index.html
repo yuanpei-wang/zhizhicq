@@ -26,7 +26,7 @@
         <button class="top-nav-link is-active" type="button" data-home-action="home">首页</button>
         <button class="top-nav-link" type="button" data-home-action="fretboard">指板练习</button>
         <button class="top-nav-link" type="button" data-home-action="theory">乐理练习</button>
-        <button id="headerWrongBank" class="top-nav-link" type="button" data-home-action="wrong">错题库 <span id="headerWrongCount">0</span></button>
+        <button id="headerWrongBank" class="top-nav-link" type="button" data-home-action="wrong">指板练习错题库 <span id="headerWrongCount">0</span></button>
       </nav>
     </header>
 
@@ -66,12 +66,12 @@
         <h2 data-tuning-text="productTitle">选择你的练习</h2>
         <nav class="practice-entry-list" aria-label="练习入口">
           <button id="fretboardTab" class="practice-entry" data-description="音名、弦位、八度与反应速度" data-tuning-module="fretboardCard">
-            <strong data-tuning-text="fretboardTitle">指板练习</strong><span aria-hidden="true">↗</span>
-            <small class="sr-only" data-tuning-text="fretboardDescription">音名、弦位、八度与反应速度</small>
+            <strong data-tuning-text="fretboardTitle">指板练习</strong><svg class="practice-entry-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5" /></svg>
+            <small class="practice-entry-touch-description" data-tuning-text="fretboardDescription">音名、弦位、八度与反应速度</small>
           </button>
           <button id="theoryTab" class="practice-entry" data-description="音阶、五度音型与三和弦琶音" data-tuning-module="theoryCard">
-            <strong data-tuning-text="theoryTitle">乐理练习</strong><span aria-hidden="true">↗</span>
-            <small class="sr-only" data-tuning-text="theoryDescription">音阶、五度音型与三和弦琶音</small>
+            <strong data-tuning-text="theoryTitle">乐理练习</strong><svg class="practice-entry-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5" /></svg>
+            <small class="practice-entry-touch-description" data-tuning-text="theoryDescription">音阶、五度音型与三和弦琶音</small>
           </button>
         </nav>
         <p id="practiceEntryDescription" class="practice-entry-description" aria-live="polite"></p>
