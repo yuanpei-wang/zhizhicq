@@ -6,23 +6,50 @@
   <title>贝斯指板练习</title>
   <link rel="stylesheet" href="../bass-fretboard-trainer-v0/styles.css" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="home-layout-tuning.css" />
+  <script src="home-layout-tuning.js" defer></script>
+  <script src="home-ui.js" defer></script>
+  <script src="bass-motion.js" defer></script>
 </head>
 <body>
   <main class="shell">
-    <header>
-      <h1>贝斯指板练习</h1>
-      <p class="subtitle">看到目标音，直接用你的贝斯作答</p>
+    <header class="site-header" data-tuning-module="header">
+      <a class="home-brand" href="?home=1" aria-label="返回首页">
+        <svg class="brand-mark" viewBox="0 0 42 42" aria-hidden="true">
+          <path class="at-outer" d="M30.3 34.4c-2.8 2.7-6.4 4-10.6 3.7C10.4 37.5 4.1 30.4 4.6 20.5 5.1 10.8 12 4 21.1 4.1c9.2.1 16.1 6.8 16.2 16.2.1 6.5-2.1 10.5-5.5 10.5-3.1 0-4.7-2.7-4.2-7.1" />
+          <path class="at-inner" d="M27.4 16.1c-1.4-2.6-4.6-4-7.5-3.2-3.5.9-5.5 4.6-4.6 8.2.9 3.7 4.6 6 8.1 5.2 3.1-.7 5.2-3.9 4.6-7.2" />
+        </svg>
+        <span>吱吱cq</span>
+      </a>
+      <h1 class="practice-brand-title">贝斯指板练习</h1>
+      <nav class="top-nav" aria-label="主导航">
+        <button class="top-nav-link is-active" type="button" data-home-action="home">首页</button>
+        <button class="top-nav-link" type="button" data-home-action="fretboard">指板练习</button>
+        <button class="top-nav-link" type="button" data-home-action="theory">乐理练习</button>
+        <button id="headerWrongBank" class="top-nav-link" type="button" data-home-action="wrong">错题库 <span id="headerWrongCount">0</span></button>
+      </nav>
     </header>
 
-    <section id="audioControls" class="card controls">
-      <label for="deviceSelect">音频输入设备</label>
-      <div class="control-row">
-        <button id="startButton">启用音频</button>
-        <select id="deviceSelect" disabled><option value="">启用后读取设备</option></select>
+    <section id="audioControls" class="card controls home-setup-bar" aria-label="音频与贝斯设置">
+      <div class="setup-main">
+        <button id="startButton" data-tuning-text="startButton">启用音频</button>
+        <div class="device-field" data-tuning-module="deviceControls">
+          <label class="sr-only" for="deviceSelect" data-tuning-text="audioLabel">音频输入设备</label>
+          <select id="deviceSelect" disabled><option value="">启用后读取设备</option></select>
+        </div>
+        <p id="deviceStatus" class="status"><span class="dot"></span>尚未连接</p>
+        <details id="diagnosticPanel" class="diagnostic-panel" data-tuning-module="diagnostics">
+          <summary>音频诊断</summary>
+          <section class="diagnostics">
+            <div><span>信号</span><strong id="level">— dB</strong></div>
+            <div><span>置信度</span><strong id="confidence">—</strong></div>
+            <div><span>稳定帧</span><strong id="stableFrames">0 / 4</strong></div>
+          </section>
+        </details>
       </div>
-      <p id="deviceStatus" class="status"><span class="dot"></span>尚未连接</p>
-      <div class="instrument-config">
-        <label for="fretCount">贝斯品数</label>
+      <span class="bass-setup-copy">Bass 品数</span>
+      <div class="instrument-config" data-tuning-module="fretSetup">
+        <label class="sr-only" for="fretCount" data-tuning-text="fretLabel">贝斯品数</label>
         <select id="fretCount" class="compact-select" aria-label="贝斯品数">
           <option value="20" selected>20 品</option>
           <option value="21">21 品</option>
@@ -30,25 +57,31 @@
           <option value="24">24 品</option>
         </select>
       </div>
-      <details id="diagnosticPanel" class="diagnostic-panel">
-        <summary>音频诊断</summary>
-        <section class="diagnostics">
-          <div><span>信号</span><strong id="level">— dB</strong></div>
-          <div><span>置信度</span><strong id="confidence">—</strong></div>
-          <div><span>稳定帧</span><strong id="stableFrames">0 / 4</strong></div>
-        </section>
-      </details>
-      <p class="privacy">音频只在当前浏览器中分析，不上传、不保存。</p>
+      <p class="privacy" data-tuning-module="privacy" data-tuning-text="privacyText">音频只在当前浏览器中分析，不上传、不保存。</p>
     </section>
 
-    <nav id="homeView" class="home-modules" aria-label="选择练习模块">
-      <button id="fretboardTab" class="module-card">
-        <strong>指板练习</strong><small>音名、弦位、八度与反应速度</small>
-      </button>
-      <button id="theoryTab" class="module-card">
-        <strong>乐理练习</strong><small>音阶、五度音型与三和弦琶音</small>
-      </button>
-    </nav>
+    <section id="homeView" class="home-hero" aria-label="选择练习模块">
+      <div class="hero-copy">
+        <p class="hero-kicker">开始之前</p>
+        <h2 data-tuning-text="productTitle">选择你的练习</h2>
+        <nav class="practice-entry-list" aria-label="练习入口">
+          <button id="fretboardTab" class="practice-entry" data-description="音名、弦位、八度与反应速度" data-tuning-module="fretboardCard">
+            <strong data-tuning-text="fretboardTitle">指板练习</strong><span aria-hidden="true">↗</span>
+            <small class="sr-only" data-tuning-text="fretboardDescription">音名、弦位、八度与反应速度</small>
+          </button>
+          <button id="theoryTab" class="practice-entry" data-description="音阶、五度音型与三和弦琶音" data-tuning-module="theoryCard">
+            <strong data-tuning-text="theoryTitle">乐理练习</strong><span aria-hidden="true">↗</span>
+            <small class="sr-only" data-tuning-text="theoryDescription">音阶、五度音型与三和弦琶音</small>
+          </button>
+        </nav>
+        <p id="practiceEntryDescription" class="practice-entry-description" aria-live="polite"></p>
+      </div>
+      <figure class="bass-illustration" aria-label="抽象手绘贝斯插画">
+        <div class="bass-motion-stage" data-svg-src="./ui-references%3Ahome%3A/abstract-bass-motion.svg" aria-hidden="true">
+          <img src="./ui-references%3Ahome%3A/abstract-bass-transparent.png" alt="" />
+        </div>
+      </figure>
+    </section>
 
     <section id="practiceWorkspace" hidden>
       <div class="workspace-bar"><button id="backHomeButton" class="back-button">← 返回首页</button><strong id="workspaceTitle">指板练习</strong></div>
