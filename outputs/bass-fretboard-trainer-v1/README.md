@@ -27,11 +27,11 @@ V1 稳定版练习闭环：支持不限时/5秒/3秒练习。进入限时模式�
 
 ## 运行
 
-在包含 `bass-fretboard-trainer-v0` 和 `bass-fretboard-trainer-v1` 两个文件夹的 `outputs` 目录运行：
+在项目目录运行：
 
 ```bash
-cd "/Users/paige.w/Documents/Codex/2026-08-25/referenced-chatgpt-conversation-this-is-an/outputs"
+cd /path/to/bass-fretboard-trainer-v1
 python3 -m http.server 8080
 ```
 
-然后用 Chrome 打开 `http://localhost:8080/bass-fretboard-trainer-v1/`。
+然后用浏览器打开 `http://localhost:8080/`。公网部署时请使用 HTTPS，以便浏览器允许麦克风访问。

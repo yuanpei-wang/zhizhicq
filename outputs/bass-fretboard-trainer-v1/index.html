@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
   <title>贝斯指板练习</title>
-  <link rel="stylesheet" href="../bass-fretboard-trainer-v0/styles.css" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="home-layout-tuning.css" />
-  <script src="home-layout-tuning.js" defer></script>
-  <script src="home-ui.js?v=20260830-1" defer></script>
-  <script src="bass-motion.js" defer></script>
+  <link rel="stylesheet" href="base-styles.css?v=20260902-1" />
+  <link rel="stylesheet" href="styles.css?v=20260904-1" />
+  <script src="home-ui.js?v=20260902-1" defer></script>
+  <script src="bass-motion.js?v=20260902-1" defer></script>
+  <script src="theory-hub.js?v=20260902-1" defer></script>
 </head>
 <body>
   <main class="shell">
     <header class="site-header" data-tuning-module="header">
-      <a class="home-brand" href="?home=1" aria-label="返回首页">
+      <a class="home-brand" href="./" data-home-action="home" aria-label="返回首页">
         <svg class="brand-mark" viewBox="0 0 42 42" aria-hidden="true">
           <path class="at-outer" d="M30.3 34.4c-2.8 2.7-6.4 4-10.6 3.7C10.4 37.5 4.1 30.4 4.6 20.5 5.1 10.8 12 4 21.1 4.1c9.2.1 16.1 6.8 16.2 16.2.1 6.5-2.1 10.5-5.5 10.5-3.1 0-4.7-2.7-4.2-7.1" />
           <path class="at-inner" d="M27.4 16.1c-1.4-2.6-4.6-4-7.5-3.2-3.5.9-5.5 4.6-4.6 8.2.9 3.7 4.6 6 8.1 5.2 3.1-.7 5.2-3.9 4.6-7.2" />
@@ -25,7 +25,7 @@
         <svg class="practice-brand-mark" viewBox="870 575 195 185" aria-hidden="true">
           <path d="M882,641C883.3,634.6 891.2,614.4 894,609C896.8,603.6 902.2,598.5 905,596C907.8,593.5 912.2,589.8 917,588C921.8,586.2 939,581.7 945,581C951,580.3 965.4,580 974,583C980.2,582.2 1001.8,587.6 1010,591C1018.2,594.4 1036.8,606 1042,611C1047.2,616 1051.8,628.3 1053,633C1054.2,637.7 1053.2,645.8 1052,650C1050.8,654.2 1048.4,662.5 1043,668C1037.6,673.5 1013.2,688.1 1007,696C1000.8,703.9 995.2,727.9 991,734C986.8,740.1 977.8,746 972,747C966.2,748 950.1,745.6 943,742C935.9,738.4 919.2,723.8 913,717C906.8,710.2 894.6,691.6 891,685C887.4,678.4 884.1,667.3 883,662C881.9,656.7 880.7,647.4 882,641Z" />
         </svg>
-        <span>贝斯指板练习</span>
+        <span id="practiceBrandText">贝斯指板练习</span>
       </h1>
       <nav class="top-nav" aria-label="主导航">
         <button class="top-nav-link is-active" type="button" data-home-action="home">首页</button>
@@ -82,8 +82,8 @@
         <p id="practiceEntryDescription" class="practice-entry-description" aria-live="polite"></p>
       </div>
       <figure class="bass-illustration" aria-label="抽象手绘贝斯插画">
-        <div class="bass-motion-stage" data-svg-src="./ui-references%3Ahome%3A/abstract-bass-motion.svg" aria-hidden="true">
-          <img src="./ui-references%3Ahome%3A/abstract-bass-transparent.png" alt="" />
+        <div class="bass-motion-stage" data-svg-src="./assets/home/abstract-bass-motion.svg" aria-hidden="true">
+          <img src="./assets/home/abstract-bass-transparent.png" alt="" />
         </div>
       </figure>
     </section>
@@ -111,10 +111,11 @@
         <label><input type="radio" name="bassString" value="G"><span>G</span></label>
       </div>
       <div class="setting-row">
-        <div><strong>是否包含升降调</strong></div>
+        <div><strong>音名范围</strong></div>
         <div class="choice">
           <label><input type="radio" name="noteSet" value="natural" checked><span>仅自然音</span></label>
-          <label><input type="radio" name="noteSet" value="chromatic"><span>包含升降音</span></label>
+          <label><input type="radio" name="noteSet" value="all"><span>全部音</span></label>
+          <label><input type="radio" name="noteSet" value="accidental"><span>仅升降音</span></label>
         </div>
       </div>
       <div class="settings-group-heading"><strong>其他设置</strong><small id="fretboardChallengeSummary">不区分八度 · 不限时</small></div>
@@ -136,6 +137,7 @@
     </section>
     </details>
     <button id="wrongBankButton" class="wrong-bank-button" hidden>错题库 <span id="wrongCount">0</span></button>
+    <span class="signature-watermark signature-watermark--practice" aria-hidden="true">@吱吱cq</span>
     </aside>
 
     <div class="practice-main">
@@ -159,7 +161,10 @@
         <button id="nextButton" class="secondary" disabled>跳过本题</button>
       </div>
     </section>
-    <div id="fretboardCoverage" class="coverage-status">覆盖 0 / 0</div>
+    <div class="fretboard-mobile-footer-actions">
+      <button class="fretboard-mobile-home back-button" type="button" data-home-action="home">返回首页</button>
+      <div id="fretboardCoverage" class="coverage-status">覆盖 0 / 0</div>
+    </div>
     </div>
     </div>
     <footer class="practice-footer">@吱吱cq</footer>
@@ -167,28 +172,57 @@
 
     <section id="theoryModule" hidden>
       <section id="theoryHub" class="theory-hub">
-        <button class="theory-card" data-theory-type="scale"><strong>音阶</strong><small>大调与自然小调完整上下行</small></button>
-        <button class="theory-card" data-theory-type="interval"><strong>五度音型</strong><small>跨四弦上行两个八度</small></button>
-        <button class="theory-card" data-theory-type="triad"><strong>三和弦琶音</strong><small>大、小三和弦跨弦练习</small></button>
-        <button class="theory-card secondary-theory" data-theory-type="degree"><strong>调内级数</strong><small>辅助记忆调内第 2～7 音</small></button>
+        <nav class="theory-hub-tabs" role="tablist" aria-label="选择乐理练习">
+          <button class="theory-hub-tab is-selected" type="button" role="tab" aria-selected="true" data-hub-theory="scale">音阶</button>
+          <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="triad">三和弦琶音</button>
+          <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="interval">五度音型</button>
+          <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="degree">调内级数</button>
+        </nav>
+        <section id="theoryHubHero" class="theory-hub-hero" data-hub-kind="scale" aria-labelledby="theoryHubTitle">
+          <div class="theory-hub-copy">
+            <div class="theory-hub-copy-content">
+              <p class="theory-hub-kicker">乐理练习</p>
+              <h2 id="theoryHubTitle">音阶</h2>
+              <p id="theoryHubDescription">熟悉大调与自然小调的音阶走向</p>
+              <button id="theoryHubLaunch" type="button" data-theory-type="scale" hidden aria-hidden="true" tabindex="-1"></button>
+            </div>
+          </div>
+          <div class="theory-hub-preview" aria-label="音阶练习过程预览">
+            <span class="signature-watermark signature-watermark--hub" aria-hidden="true">@吱吱cq</span>
+            <div class="theory-preview-copy">
+              <p id="theoryPreviewPrompt" class="theory-preview-prompt" hidden></p>
+              <h3 id="theoryPreviewTitle">大调</h3>
+            </div>
+            <div id="theoryPreviewSequence" class="theory-preview-sequence theory-preview-sequence--scale" aria-hidden="true"></div>
+          </div>
+        </section>
+        <footer class="practice-footer">@吱吱cq</footer>
       </section>
       <select id="theoryType" hidden aria-label="当前乐理练习"><option value="scale">音阶</option><option value="interval">五度音型</option><option value="triad">三和弦琶音</option><option value="degree">调内级数</option></select>
       <section id="theoryPractice" hidden>
-      <div class="subpage-bar"><button id="backTheoryButton" class="back-button">← 返回乐理练习</button><strong id="theoryPracticeTitle">音阶</strong></div>
+      <div class="subpage-bar theory-hub-back-row"><button id="backTheoryButton" class="back-button">返回乐理 Hub</button><strong id="theoryPracticeTitle" class="sr-only">音阶</strong></div>
       <div class="practice-grid theory-grid">
       <aside class="practice-sidebar">
-      <details class="card theory-options">
-        <summary><span>题目设置</span><small id="theoryOptionsSummary">可选</small></summary>
+      <details class="card theory-options" open>
+        <summary><span>训练范围</span><small id="theoryOptionsSummary">可选</small></summary>
         <section class="settings theory-settings">
         <div id="scaleQualityRow" class="setting-row">
-          <div><strong>调式</strong><small>自然小调使用固定的自然小音阶</small></div>
+          <div><strong>调式</strong></div>
           <div class="choice">
             <label><input type="radio" name="scaleQuality" value="major" checked><span>大调</span></label>
             <label><input type="radio" name="scaleQuality" value="minor"><span>自然小调</span></label>
           </div>
         </div>
+        <div id="theoryRootRangeRow" class="setting-row">
+          <div><strong id="theoryRootRangeLabel">主音范围</strong></div>
+          <div class="choice">
+            <label><input type="radio" name="theoryRootRange" value="natural" checked><span>仅自然音</span></label>
+            <label><input type="radio" name="theoryRootRange" value="all"><span>全部音</span></label>
+            <label><input type="radio" name="theoryRootRange" value="accidental"><span>仅升降音</span></label>
+          </div>
+        </div>
         <div class="setting-row">
-          <div><strong id="theoryKeyLabel">调</strong><small>升降号会按照调性正确显示</small></div>
+          <div><strong id="theoryKeyLabel">调</strong></div>
           <select id="scaleKey" class="compact-select" aria-label="选择调">
             <option value="random" selected>不指定</option>
             <option value="0">C</option><option value="7">G</option><option value="2">D</option><option value="9">A</option>
@@ -197,7 +231,7 @@
           </select>
         </div>
         <div id="theoryStringRow" class="setting-row">
-          <div><strong>根音所在弦</strong><small>后续音符可以跨弦演奏</small></div>
+          <div><strong>根音所在弦</strong></div>
           <div class="choice">
             <label><input type="radio" name="scaleString" value="E"><span>E 弦</span></label>
             <label><input type="radio" name="scaleString" value="A"><span>A 弦</span></label>
@@ -222,8 +256,9 @@
         </div>
         </section>
       </details>
-      <div id="theoryCoverage" class="coverage-status">覆盖 0 / 0</div>
+      <span class="signature-watermark signature-watermark--practice signature-watermark--theory" aria-hidden="true">@吱吱cq</span>
       </aside>
+      <div class="practice-main theory-practice-main">
       <section class="card scale-quiz">
         <p id="scalePrompt" class="prompt">从 A 弦上的 C 开始</p>
         <h2 id="scaleTitle">C 大调</h2>
@@ -232,7 +267,6 @@
         <div id="scaleFeedback" class="feedback waiting">启用音频后开始</div>
         <p id="scaleHeard" class="heard"></p>
         <div id="sequenceHintControls" class="sequence-hint-controls">
-          <span>是否显示音名</span>
           <div class="choice">
             <label><input type="radio" name="hintMode" value="guided"><span>显示音名</span></label>
             <label><input type="radio" name="hintMode" value="memory" checked><span>隐藏音名</span></label>
@@ -243,7 +277,13 @@
           <button id="skipTheoryButton" class="secondary">跳过本题</button>
         </div>
       </section>
+      <div class="theory-mobile-footer-actions">
+        <button class="theory-mobile-hub back-button" type="button" data-theory-return>返回乐理 Hub</button>
+        <div id="theoryCoverage" class="coverage-status">覆盖 0 / 0</div>
       </div>
+      </div>
+      </div>
+      <footer class="practice-footer">@吱吱cq</footer>
       </section>
     </section>
 
@@ -251,7 +291,7 @@
   </main>
   <dialog id="wrongPracticeDialog" class="wrong-practice-dialog">
     <div class="wrong-practice-head"><h2>错题练习</h2><span id="wrongPracticeRemaining"></span></div>
-    <div id="wrongPracticeBody"></div>
+    <div id="wrongPracticeBody" class="wrong-practice-body"></div>
   </dialog>
   <dialog id="timeSupportDialog" class="support-dialog">
     <h2>需要切换为不限时吗？</h2>
@@ -261,6 +301,6 @@
       <button id="continueTimedButton" class="secondary">继续计时练习</button>
     </div>
   </dialog>
-  <script type="module" src="app.js?v=20260830-1"></script>
+  <script type="module" src="app.js?v=20260904-2"></script>
 </body>
 </html>

@@ -1,32 +1,36 @@
 (() => {
-  const params=new URLSearchParams(window.location.search);
-  if(params.get('home')==='1')document.documentElement.classList.add('home-direct-preview');
+  const theoryPractice=document.getElementById('theoryPractice'),wrongDialog=document.getElementById('wrongPracticeDialog');
 
-  const actions={
-    home:()=>document.getElementById('backHomeButton')?.click(),
-    fretboard:()=>document.getElementById('fretboardTab')?.click(),
-    theory:()=>document.getElementById('theoryTab')?.click(),
-    wrong:()=>document.getElementById('wrongBankButton')?.click()
+  const flatNoteSelector='#scaleTitle,#scalePrompt,#scaleFeedback,#scaleHeard,.scale-step';
+  const decorateFlatNote=element=>{
+    if(!element||element.querySelector('.accidental-mark'))return;
+    const original=element.textContent;
+    if(!/[♭♯]/.test(original)){if(element.hasAttribute('data-flat-decorated')){element.removeAttribute('aria-label');element.removeAttribute('data-flat-decorated');}return;}
+    element.setAttribute('aria-label',original);element.setAttribute('data-flat-decorated','');
+    const walker=document.createTreeWalker(element,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())if(/[♭♯]/.test(walker.currentNode.data))nodes.push(walker.currentNode);
+    nodes.forEach(node=>{const fragment=document.createDocumentFragment();node.data.split(/([♭♯])/).forEach(part=>{if(part==='♭'||part==='♯'){const mark=document.createElement('span');mark.className=`accidental-mark ${part==='♭'?'flat-mark':'sharp-mark'}`;mark.setAttribute('aria-hidden','true');mark.textContent=part;fragment.append(mark);}else fragment.append(part);});node.replaceWith(fragment);});
   };
-  document.querySelectorAll('[data-home-action]').forEach(button=>button.addEventListener('click',()=>actions[button.dataset.homeAction]?.()));
-
-  const navButtons=[...document.querySelectorAll('.top-nav-link[data-home-action]')];
-  const fretboardModule=document.getElementById('fretboardModule'),theoryModule=document.getElementById('theoryModule'),wrongDialog=document.getElementById('wrongPracticeDialog');
-  const syncActiveNavigation=()=>{
-    const active=wrongDialog?.open?'wrong':document.body.classList.contains('in-practice')?(fretboardModule?.hidden?'theory':'fretboard'):'home';
-    navButtons.forEach(button=>button.classList.toggle('is-active',button.dataset.homeAction===active));
+  const decorateTheoryFlats=records=>{
+    const targets=new Set();
+    records?.forEach(record=>{const element=record.target.nodeType===Node.TEXT_NODE?record.target.parentElement:record.target;if(element?.matches?.(flatNoteSelector))targets.add(element);element?.closest?.(flatNoteSelector)&&targets.add(element.closest(flatNoteSelector));element?.querySelectorAll?.(flatNoteSelector).forEach(target=>targets.add(target));});
+    if(!records)theoryPractice?.querySelectorAll(flatNoteSelector).forEach(target=>targets.add(target));
+    targets.forEach(decorateFlatNote);
   };
-  const activeObserver=new MutationObserver(syncActiveNavigation);
-  activeObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
-  if(fretboardModule)activeObserver.observe(fretboardModule,{attributes:true,attributeFilter:['hidden']});
-  if(theoryModule)activeObserver.observe(theoryModule,{attributes:true,attributeFilter:['hidden']});
-  if(wrongDialog)activeObserver.observe(wrongDialog,{attributes:true,attributeFilter:['open']});
-  syncActiveNavigation();
+  if(theoryPractice)new MutationObserver(decorateTheoryFlats).observe(theoryPractice,{childList:true,characterData:true,subtree:true});
+  decorateTheoryFlats();
 
   const sourceCount=document.getElementById('wrongCount'),headerCount=document.getElementById('headerWrongCount'),headerWrong=document.getElementById('headerWrongBank');
   const syncWrongCount=()=>{const count=sourceCount?.textContent||'0';if(headerCount)headerCount.textContent=count;if(headerWrong)headerWrong.disabled=count==='0';};
   if(sourceCount)new MutationObserver(syncWrongCount).observe(sourceCount,{childList:true,characterData:true,subtree:true});
   syncWrongCount();
+
+  const exitWrongButton=document.getElementById('exitWrongButton');
+  wrongDialog?.addEventListener('click',event=>{
+    if(event.target!==wrongDialog||!wrongDialog.open)return;
+    const rect=wrongDialog.getBoundingClientRect();
+    const clickedBackdrop=event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;
+    if(clickedBackdrop)exitWrongButton?.click();
+  });
 
   const deviceStatus=document.getElementById('deviceStatus');
   const heroTitle=document.querySelector('.hero-copy h2');

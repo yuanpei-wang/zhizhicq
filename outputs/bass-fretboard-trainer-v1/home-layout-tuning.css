@@ -5,10 +5,6 @@ html.layout-tuning-mode body {
   padding:16px 422px 16px 16px;
 }
 
-html.layout-tuning-mode body > .opening-phase-one {
-  display:none;
-}
-
 .home-tuning-preview-host {
   flex:0 0 var(--tuning-preview-width,1440px);
   width:var(--tuning-preview-width,1440px);

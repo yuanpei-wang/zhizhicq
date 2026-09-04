@@ -11,14 +11,17 @@
     svg.removeAttribute('width');
     svg.removeAttribute('height');
     stage.replaceChildren(document.importNode(svg, true));
-  } catch {
-    return;
-  }
+  } catch { return; }
 
   const svg = stage.querySelector('svg');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  if (!svg || reducedMotion.matches) return;
-
+  if (!svg) return;
+  const reducedAmplitude = reducedMotion.matches ? 0.85 : 1;
+  const reducedSpeed = reducedMotion.matches ? 0.7 : 1;
+  const scheduleNextFrame = callback => {
+    if (reducedMotion.matches) return setTimeout(() => callback(performance.now()), 50);
+    return requestAnimationFrame(callback);
+  };
   const mainBody = svg.querySelector('#main-body-path');
   const neck = svg.querySelector('#neck-path');
   const dotPaths = [...svg.querySelectorAll('.dots path')];
@@ -73,16 +76,16 @@
 
   const render = now => {
     const elapsed = now - startedAt;
-    const seconds = elapsed / 1000;
-    const entrance = Math.min(1, elapsed / 1400);
+    const seconds = elapsed / 1000 * reducedSpeed;
+    const entrance = Math.min(1, elapsed / (reducedMotion.matches ? 2200 : 1400));
     const softenedEntrance = entrance * entrance * (3 - 2 * entrance);
 
     // Base periods differ, with small secondary waves preventing lockstep motion.
-    const bodyForce = softenedEntrance * (
+    const bodyForce = reducedAmplitude * softenedEntrance * (
       38 * Math.sin(seconds * Math.PI * 2 / 8.8) +
       6 * Math.sin(seconds * Math.PI * 2 / 7.4 + 0.72)
     );
-    const neckForce = softenedEntrance * (
+    const neckForce = reducedAmplitude * softenedEntrance * (
       14 * Math.sin(seconds * Math.PI * 2 / 8.1 + 0.3) +
       3 * Math.sin(seconds * Math.PI * 2 / 7.2 + 1.15)
     );
@@ -94,9 +97,9 @@
     };
     deformPath(neck, neckTokens, deformNeckPoint);
     dotModels.forEach(model => deformPath(model.path, model.tokens, deformNeckPoint));
-    requestAnimationFrame(render);
+    scheduleNextFrame(render);
   };
 
-  requestAnimationFrame(render);
+  scheduleNextFrame(render);
   reducedMotion.addEventListener('change', () => location.reload());
 })();
