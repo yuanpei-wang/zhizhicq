@@ -1,13 +1,14 @@
 .DS_Store
 
-# Generated deployment bundles
-outputs/bass-fretboard-trainer-v1-deploy/
+# Previous project layouts, archives, references, and generated deploy bundles
+outputs/
+bass-fretboard-trainer-v1-deploy/
 
-# Archived opening experiments and visual references
-outputs/bass-fretboard-trainer-v1/opening-references/
-outputs/bass-fretboard-trainer-v1/opening-static.js
-outputs/bass-fretboard-trainer-v1/ui-references:home:/
-outputs/bass-fretboard-trainer-v1/ui-references:theory-hub:/
+# Archived opening experiments and visual references, if copied to the root
+opening-references/
+opening-static.js
+ui-references:home:/
+ui-references:theory-hub:/
 
 # Reference captures and recordings
 *.mov
