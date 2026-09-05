@@ -34,19 +34,16 @@
   // exercise rules in app.js. They never enter audio, judging or coverage state.
   const modules={
     scale:{
-      title:'音阶',description:'熟悉大调与自然小调的音阶走向',color:'#CBCADA',
-      examples:[
-        {title:'大调',notes:['C','D','E','F','G','A','B','C']},
-        {title:'自然小调',notes:['A','B','C','D','E','F','G','A']}
-      ]
+      title:'音阶',description:'熟悉常用音阶在指板上的走向',color:'#CBCADA',
+      examples:[{title:'C 大调',notes:['C','D','E','F','G','A','B','C']}]
     },
     interval:{
       title:'五度音型',description:'根音与五度在指板上的连接',color:'#C0D1CA',
       examples:[{prompt:'从 E 弦上的 D 开始',title:'D 根音 · 五度音型',notes:['D','A','D','A','D']}]
     },
     triad:{
-      title:'三和弦琶音',description:'熟悉三和弦在指板上的构成与走向',color:'#CC7C5E',
-      examples:[{title:'三和弦琶音',notes:['C','E','G','C','E','G','C']}]
+      title:'和弦琶音',description:'熟悉常用和弦在指板上的构成与走向',color:'#CC7C5E',
+      examples:[{title:'和弦琶音',notes:['C','E','G','C','E','G','C']}]
     },
     degree:{
       title:'调内级数',description:'建立调内音级与目标音的反应',color:'#B86B86',

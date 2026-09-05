@@ -6,10 +6,10 @@
   <link rel="icon" href="data:," />
   <title>贝斯指板练习</title>
   <link rel="stylesheet" href="base-styles.css?v=20260902-1" />
-  <link rel="stylesheet" href="styles.css?v=20260904-1" />
-  <script src="home-ui.js?v=20260902-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260905-13" />
+  <script src="home-ui.js?v=20260905-4" defer></script>
   <script src="bass-motion.js?v=20260902-1" defer></script>
-  <script src="theory-hub.js?v=20260902-1" defer></script>
+  <script src="theory-hub.js?v=20260905-2" defer></script>
 </head>
 <body>
   <main class="shell">
@@ -71,12 +71,14 @@
         <h2 data-tuning-text="productTitle">选择你的练习</h2>
         <nav class="practice-entry-list" aria-label="练习入口">
           <button id="fretboardTab" class="practice-entry" data-description="音名、弦位、八度与反应速度" data-tuning-module="fretboardCard">
+            <span class="practice-entry-breathe" aria-hidden="true"></span>
             <strong data-tuning-text="fretboardTitle">指板练习</strong><svg class="practice-entry-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5" /></svg>
             <small class="practice-entry-touch-description" data-tuning-text="fretboardDescription">音名、弦位、八度与反应速度</small>
           </button>
-          <button id="theoryTab" class="practice-entry" data-description="音阶、五度音型与三和弦琶音" data-tuning-module="theoryCard">
+          <button id="theoryTab" class="practice-entry" data-description="音阶、五度音型与和弦琶音" data-tuning-module="theoryCard">
+            <span class="practice-entry-breathe" aria-hidden="true"></span>
             <strong data-tuning-text="theoryTitle">乐理练习</strong><svg class="practice-entry-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5" /></svg>
-            <small class="practice-entry-touch-description" data-tuning-text="theoryDescription">音阶、五度音型与三和弦琶音</small>
+            <small class="practice-entry-touch-description" data-tuning-text="theoryDescription">音阶、五度音型与和弦琶音</small>
           </button>
         </nav>
         <p id="practiceEntryDescription" class="practice-entry-description" aria-live="polite"></p>
@@ -174,7 +176,7 @@
       <section id="theoryHub" class="theory-hub">
         <nav class="theory-hub-tabs" role="tablist" aria-label="选择乐理练习">
           <button class="theory-hub-tab is-selected" type="button" role="tab" aria-selected="true" data-hub-theory="scale">音阶</button>
-          <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="triad">三和弦琶音</button>
+          <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="triad">和弦琶音</button>
           <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="interval">五度音型</button>
           <button class="theory-hub-tab" type="button" role="tab" aria-selected="false" data-hub-theory="degree">调内级数</button>
         </nav>
@@ -198,7 +200,7 @@
         </section>
         <footer class="practice-footer">@吱吱cq</footer>
       </section>
-      <select id="theoryType" hidden aria-label="当前乐理练习"><option value="scale">音阶</option><option value="interval">五度音型</option><option value="triad">三和弦琶音</option><option value="degree">调内级数</option></select>
+      <select id="theoryType" hidden aria-label="当前乐理练习"><option value="scale">音阶</option><option value="interval">五度音型</option><option value="triad">和弦琶音</option><option value="degree">调内级数</option></select>
       <section id="theoryPractice" hidden>
       <div class="subpage-bar theory-hub-back-row"><button id="backTheoryButton" class="back-button">返回乐理 Hub</button><strong id="theoryPracticeTitle" class="sr-only">音阶</strong></div>
       <div class="practice-grid theory-grid">
@@ -207,11 +209,14 @@
         <summary><span>训练范围</span><small id="theoryOptionsSummary">可选</small></summary>
         <section class="settings theory-settings">
         <div id="scaleQualityRow" class="setting-row">
-          <div><strong>调式</strong></div>
-          <div class="choice">
-            <label><input type="radio" name="scaleQuality" value="major" checked><span>大调</span></label>
-            <label><input type="radio" name="scaleQuality" value="minor"><span>自然小调</span></label>
-          </div>
+          <div><strong id="scaleQualityLabel">音阶类型</strong></div>
+          <select id="scaleQuality" class="compact-select" aria-label="音阶类型">
+            <option value="major" selected>大调</option>
+            <option value="minor">自然小调</option>
+            <option value="major-pentatonic">大调五声音阶</option>
+            <option value="minor-pentatonic">小调五声音阶</option>
+            <option value="minor-blues">小调布鲁斯音阶</option>
+          </select>
         </div>
         <div id="theoryRootRangeRow" class="setting-row">
           <div><strong id="theoryRootRangeLabel">主音范围</strong></div>
@@ -241,7 +246,7 @@
           </div>
         </div>
         <div id="arpStringRow" class="setting-row" hidden>
-          <div><strong>起始弦</strong><small>两八度琶音从 E 弦或 A 弦根音开始</small></div>
+          <div><strong>起始弦</strong><small>从 E 弦或 A 弦根音开始</small></div>
           <div class="choice">
             <label><input type="radio" name="arpString" value="E"><span>E 弦</span></label>
             <label><input type="radio" name="arpString" value="A"><span>A 弦</span></label>
@@ -249,9 +254,15 @@
           </div>
         </div>
         <div id="triadRow" class="setting-row" hidden>
-          <div><strong>和弦类型</strong><small>连续上行两个八度</small></div>
-          <select id="triadType" class="compact-select" aria-label="三和弦类型">
-            <option value="random">不指定</option><option value="major" selected>大三和弦</option><option value="minor">小三和弦</option>
+          <div><strong>和弦类型</strong></div>
+          <select id="triadType" class="compact-select" aria-label="和弦类型">
+            <option value="random">不指定</option>
+            <option value="major" selected>大三和弦</option>
+            <option value="minor">小三和弦</option>
+            <option value="diminished">减三和弦</option>
+            <option value="major7">大七和弦（Maj7）</option>
+            <option value="minor7">小七和弦（m7）</option>
+            <option value="dominant7">属七和弦（7）</option>
           </select>
         </div>
         </section>
@@ -301,6 +312,6 @@
       <button id="continueTimedButton" class="secondary">继续计时练习</button>
     </div>
   </dialog>
-  <script type="module" src="app.js?v=20260904-2"></script>
+  <script type="module" src="app.js?v=20260905-2"></script>
 </body>
 </html>

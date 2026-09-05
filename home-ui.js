@@ -40,10 +40,34 @@
 
   const description=document.getElementById('practiceEntryDescription');
   const entryList=document.querySelector('.practice-entry-list');
+  const entries=[...document.querySelectorAll('.practice-entry')];
+  const breatheCircles=entries.map(entry=>entry.querySelector('.practice-entry-breathe'));
   const hideDescription=()=>{if(!description)return;const focused=document.activeElement?.closest?.('.practice-entry');if(!focused)description.classList.remove('is-visible');};
-  document.querySelectorAll('.practice-entry').forEach(entry=>{
+  entries.forEach(entry=>{
     const show=()=>{if(!description)return;description.classList.remove('is-visible');requestAnimationFrame(()=>{description.textContent=entry.dataset.description;description.classList.add('is-visible');});};
     entry.addEventListener('mouseenter',show);entry.addEventListener('focus',show);entry.addEventListener('blur',()=>requestAnimationFrame(hideDescription));
   });
   entryList?.addEventListener('mouseleave',hideDescription);
+
+  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  let touchBreatheTimer=null;
+  const stopTouchBreatheFallback=()=>{clearTimeout(touchBreatheTimer);touchBreatheTimer=null;document.body.classList.remove('home-touch-breathe-fallback');breatheCircles.forEach(circle=>circle?.style.removeProperty('background-color'));};
+  const syncTouchBreatheFallback=()=>{
+    stopTouchBreatheFallback();
+    if(!reducedMotion.matches)return;
+    document.body.classList.add('home-touch-breathe-fallback');
+    const startedAt=performance.now(),amplitude=.85,speed=.7,period=3200,offset=1450;
+    const tick=()=>{
+      if(!reducedMotion.matches){stopTouchBreatheFallback();return;}
+      if(!document.hidden&&!document.body.classList.contains('in-practice')){
+        const elapsed=(performance.now()-startedAt)*speed;
+        breatheCircles.forEach((circle,index)=>{const wave=(1-Math.cos((elapsed+(index?offset:0))*Math.PI*2/period))/2;if(circle)circle.style.backgroundColor=`rgba(216,206,230,${.52*amplitude*wave})`;});
+      }
+      touchBreatheTimer=setTimeout(tick,document.hidden?200:50);
+    };
+    tick();
+  };
+  reducedMotion.addEventListener('change',syncTouchBreatheFallback);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)return;syncTouchBreatheFallback();});
+  syncTouchBreatheFallback();
 })();

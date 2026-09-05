@@ -3,7 +3,7 @@ import { detectPitch, frequencyToNote } from './pitch.js?v=20260902-1';
 const $ = id => document.getElementById(id);
 const ui = Object.fromEntries([
   'homeView','practiceWorkspace','backHomeButton','workspaceTitle','audioControls','diagnosticPanel','deviceSelect','startButton','deviceStatus','stringPicker','fretCount','fretboardTab','theoryTab','fretboardModule','fretboardOptionsSummary','fretboardChallengeSummary','fretboardCoverage','theoryModule','theoryHub','theoryPractice','backTheoryButton','theoryPracticeTitle','wrongBankButton','wrongCount','wrongPracticeDialog','wrongPracticeBody','wrongPracticeRemaining','quizHome','quizCard',
-  'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','theoryCoverage','scaleQualityRow','theoryKeyLabel','scaleKey','theoryRootRangeRow','theoryRootRangeLabel','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
+  'round','score','timer','prompt','targetNote','enharmonic','targetOctave','readyButton','feedback','heard','exitWrongButton','pauseButton','nextButton','theoryType','theoryOptionsSummary','theoryCoverage','scaleQualityRow','scaleQualityLabel','scaleQuality','theoryKeyLabel','scaleKey','theoryRootRangeRow','theoryRootRangeLabel','theoryStringRow','arpStringRow','triadRow','triadType','scaleTitle','scalePrompt','scaleDirectionText','scaleProgress','scaleFeedback','scaleHeard','sequenceHintControls','resetScaleButton','skipTheoryButton','timeSupportDialog','switchUntimedButton','continueTimedButton','level','confidence','stableFrames'
 ].map(id => [id,$(id)]));
 const SHARPS=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const FLATS=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
@@ -24,6 +24,22 @@ let scaleExerciseString='A',previousScaleString='',scaleExerciseKey='0',previous
 let scaleAdvanceTimer=null;
 const MAJOR_INTERVALS=[0,2,4,5,7,9,11,12];
 const MINOR_INTERVALS=[0,2,3,5,7,8,10,12];
+const SCALE_DEFINITIONS={
+  major:{label:'大调',intervals:MAJOR_INTERVALS,context:'major',noteIndexes:[0,1,2,3,4,5,6,7]},
+  minor:{label:'自然小调',intervals:MINOR_INTERVALS,context:'minor',noteIndexes:[0,1,2,3,4,5,6,7]},
+  'major-pentatonic':{label:'大调五声音阶',intervals:[0,2,4,7,9,12],context:'major',noteIndexes:[0,1,2,4,5,7]},
+  'minor-pentatonic':{label:'小调五声音阶',intervals:[0,3,5,7,10,12],context:'minor',noteIndexes:[0,2,3,4,6,7]},
+  'minor-blues':{label:'小调布鲁斯音阶',intervals:[0,3,5,6,7,10,12],context:'minor'}
+};
+const CHORD_DEFINITIONS={
+  major:{label:'大三和弦',intervals:[0,4,7,12,16,19,24],context:'major',noteIndexes:[0,2,4,7,2,4,7],direction:'连续上行两个八度'},
+  minor:{label:'小三和弦',intervals:[0,3,7,12,15,19,24],context:'minor',noteIndexes:[0,2,4,7,2,4,7],direction:'连续上行两个八度'},
+  diminished:{label:'减三和弦',intervals:[0,3,6,12,15,18,24],context:'minor',direction:'连续上行两个八度'},
+  major7:{label:'大七和弦',intervals:[0,4,7,11,12,11,7,4,0],context:'major',noteIndexes:[0,2,4,6,7,6,4,2,0],direction:'上行一个八度，再下行返回'},
+  minor7:{label:'小七和弦',intervals:[0,3,7,10,12,10,7,3,0],context:'minor',noteIndexes:[0,2,4,6,7,6,4,2,0],direction:'上行一个八度，再下行返回'},
+  dominant7:{label:'属七和弦',intervals:[0,4,7,10,12,10,7,4,0],context:'major',direction:'上行一个八度，再下行返回'}
+};
+const CHORD_KINDS=Object.keys(CHORD_DEFINITIONS);
 const TONICS={
   0:{major:{label:'C',notes:['C','D','E','F','G','A','B','C']},minor:{label:'C',notes:['C','D','E♭','F','G','A♭','B♭','C']}},
   1:{major:{label:'D♭',notes:['D♭','E♭','F','G♭','A♭','B♭','C','D♭']},minor:{label:'C♯',notes:['C♯','D♯','E','F♯','G♯','A','B','C♯']}},
@@ -54,7 +70,7 @@ const pitchClassesForRange = range => range==='natural'?NATURAL:range==='acciden
 const rangeLabel = range => range==='natural'?'仅自然音':range==='accidental'?'仅升降音':'全部音';
 const noteData = midi => ({midi,pc:(midi%12+12)%12,sharp:SHARPS[(midi%12+12)%12],flat:FLATS[(midi%12+12)%12],octave:Math.floor(midi/12)-1});
 const pitchName = midi => {const note=noteData(midi);return SHARPS[note.pc]===FLATS[note.pc]?`${note.sharp}${note.octave}`:`${note.sharp}${note.octave} / ${note.flat}${note.octave}`;};
-function theoryContext(){const quality=theoryKind==='interval'?'major':theoryKind==='triad'?currentTriadKind:theoryQuality;return TONICS[scaleExerciseKey]?.[quality];}
+function theoryContext(){if(theoryKind==='scale'||theoryKind==='triad')return {notes:theoryNames};const quality=theoryKind==='interval'?'major':theoryQuality;return TONICS[scaleExerciseKey]?.[quality];}
 function theoryPitchName(midi){
   const note=noteData(midi),context=theoryContext(),exact=context?.notes.find(name=>noteNamePitchClass(name)===note.pc);
   if(exact)return `${exact}${note.octave}`;
@@ -62,7 +78,11 @@ function theoryPitchName(midi){
   if(context?.notes.some(name=>name.includes('♯')))return `${note.sharp}${note.octave}`;
   return pitchName(midi);
 }
-function noteNamePitchClass(name){const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[name[0]],offset=name.includes('♯')?1:name.includes('♭')?-1:0;return (base+offset+12)%12;}
+function noteNamePitchClass(name){const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[name[0]],offset=[...name].reduce((sum,character)=>sum+(character==='♯'?1:character==='♭'?-1:0),0);return (base+offset+12)%12;}
+function spellPitchForLetter(letter,pc){const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[letter];let offset=(pc-base+12)%12;if(offset>6)offset-=12;return `${letter}${offset>0?'♯'.repeat(offset):'♭'.repeat(-offset)}`;}
+function diminishedFifthName(tonicLabel,key){const letters='CDEFGAB',rootIndex=letters.indexOf(tonicLabel[0]),fifthLetter=letters[(rootIndex+4)%7];return spellPitchForLetter(fifthLetter,(Number(key)+6)%12);}
+function scaleNames(key,definition){const tonic=TONICS[key][definition.context];if(definition.noteIndexes)return definition.noteIndexes.map(index=>tonic.notes[index]);return [tonic.notes[0],tonic.notes[2],tonic.notes[3],diminishedFifthName(tonic.label,key),tonic.notes[4],tonic.notes[6],tonic.notes[7]];}
+function chordNames(key,kind){const definition=CHORD_DEFINITIONS[kind],tonic=TONICS[key][definition.context];if(definition.noteIndexes)return definition.noteIndexes.map(index=>tonic.notes[index]);if(kind==='diminished'){const fifth=diminishedFifthName(tonic.label,key);return [tonic.notes[0],tonic.notes[2],fifth,tonic.notes[7],tonic.notes[2],fifth,tonic.notes[7]];}const flatSeven=TONICS[key].minor.notes[6];return [tonic.notes[0],tonic.notes[2],tonic.notes[4],flatSeven,tonic.notes[7],flatSeven,tonic.notes[4],tonic.notes[2],tonic.notes[0]];}
 const questionKey = item => `${item.string}-${item.exact?item.midi:item.pc}`;
 const wrongKey = item => `${item.string}|${item.exact?'exact':'ignore'}|${item.exact?item.midi:item.pc}`;
 const theoryQuestionKey = item => item.kind?`${item.key}|${item.string}|${item.kind}`:item.degree?`${item.key}|${item.degree}`:`${item.key}|${item.string}`;
@@ -85,8 +105,8 @@ function markFretboardCovered(){if(practiceMode!=='normal'||!target)return;const
 
 function theoryConfigurationKey(type=ui.theoryType.value){
   const parts=['theory',type,ui.fretCount.value,ui.scaleKey.value,selected('theoryRootRange')];
-  if(type==='scale')parts.push(selected('scaleQuality'),selected('scaleString'));
-  else if(type==='degree')parts.push(selected('scaleQuality'));
+  if(type==='scale')parts.push(ui.scaleQuality.value,selected('scaleString'));
+  else if(type==='degree')parts.push(ui.scaleQuality.value);
   else if(type==='triad')parts.push(selected('arpString'),ui.triadType.value);
   return JSON.stringify(parts);
 }
@@ -94,10 +114,11 @@ function buildTheoryCoverageCandidates(type=ui.theoryType.value){
   const keyOptions=theoryKeyOptions();
   if(type==='degree')return keyOptions.flatMap(key=>canCompleteFromString(key,'E',0)?['2','3','4','5','6','7'].map(degree=>({key,string:'E',degree})):[]);
   const stringMode=type==='scale'?selected('scaleString'):type==='triad'?selected('arpString'):'E';
-  const stringOptions=stringMode==='mixed'?(type==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode],maxSpan=type==='scale'?12:24;
-  const pairs=[];for(const key of keyOptions)for(const string of stringOptions)if(canCompleteFromString(key,string,maxSpan))pairs.push({key,string});
-  if(type!=='triad')return pairs;
-  const kinds=ui.triadType.value==='random'?['major','minor']:[ui.triadType.value];return pairs.flatMap(pair=>kinds.map(kind=>({...pair,kind})));
+  const stringOptions=stringMode==='mixed'?(type==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode];
+  if(type!=='triad'){const maxSpan=type==='scale'?12:24,pairs=[];for(const key of keyOptions)for(const string of stringOptions)if(canCompleteFromString(key,string,maxSpan))pairs.push({key,string});return pairs;}
+  const kinds=ui.triadType.value==='random'?CHORD_KINDS:[ui.triadType.value],candidates=[];
+  for(const key of keyOptions)for(const string of stringOptions)for(const kind of kinds){const maxSpan=Math.max(...CHORD_DEFINITIONS[kind].intervals);if(canCompleteFromString(key,string,maxSpan))candidates.push({key,string,kind});}
+  return candidates;
 }
 function theoryKeyOptions(){
   if(ui.scaleKey.value!=='random')return [ui.scaleKey.value];
@@ -204,7 +225,10 @@ function armQuestion(){armed=true;questionStartedAt=performance.now();responseMs
 function renderScaleProgress(){
   const guided=selected('hintMode')==='guided';ui.scaleProgress.innerHTML='';
   ui.scaleProgress.classList.toggle('round-trip',theoryNames.length>8);
+  ui.scaleProgress.classList.toggle('long-chord',theoryKind==='triad'&&theoryNames.length===9);
   ui.scaleProgress.classList.toggle('short-sequence',theoryNames.length<=3);
+  ui.theoryPractice.dataset.sequenceLength=String(theoryNames.length);
+  ui.theoryPractice.dataset.scaleType=theoryKind==='scale'?theoryQuality:'';
   ui.scaleProgress.style.gridTemplateColumns=theoryNames.length>8?'':`repeat(${theoryNames.length},minmax(0,70px))`;
   theoryNames.forEach((name,index)=>{const revealed=guided||index<scaleIndex||(scaleHintRevealed&&index===scaleIndex);const step=document.createElement('div');step.className=`scale-step${index<scaleIndex?' done':index===scaleIndex?' current':''}${!revealed?' concealed':''}${scaleHintRevealed&&index===scaleIndex?' hint':''}`;if(!revealed)step.textContent='•';else{step.textContent=name;if(theoryKind!=='degree'&&scaleSequence[index]!==undefined){const octave=document.createElement('span');octave.className='progress-octave';octave.textContent=noteData(scaleSequence[index]).octave;step.append(octave);}}ui.scaleProgress.append(step);});
 }
@@ -218,6 +242,9 @@ function canCompleteFromString(key,string,maxSpan){
 function updateTheorySettings(){
   const type=ui.theoryType.value,isScale=type==='scale',isDegree=type==='degree';
   ui.scaleQualityRow.hidden=!(isScale||isDegree);ui.theoryStringRow.hidden=!isScale;ui.arpStringRow.hidden=type!=='triad';ui.triadRow.hidden=type!=='triad';ui.sequenceHintControls.hidden=false;
+  ui.scaleQualityLabel.textContent=isScale?'音阶类型':'调式';
+  [...ui.scaleQuality.options].forEach(option=>{const unavailable=isDegree&&!['major','minor'].includes(option.value);option.disabled=unavailable;option.hidden=unavailable;});
+  if(isDegree&&!['major','minor'].includes(ui.scaleQuality.value))ui.scaleQuality.value='major';
   ui.theoryKeyLabel.textContent=isScale||isDegree?'调':'根音';
   ui.theoryRootRangeLabel.textContent=isScale||isDegree?'主音范围':'根音范围';updateTheoryKeyAvailability();
 }
@@ -231,43 +258,43 @@ function updateTheoryKeyAvailability(){
 function captureTheorySettings(type=ui.theoryType.value){
   const state=theorySessionSettings[type];if(!state)return;
   state.scaleKey=ui.scaleKey.value;state.rootRange=selected('theoryRootRange');
-  if(type==='scale'){state.scaleQuality=selected('scaleQuality');state.scaleString=selected('scaleString');state.hintMode=selected('hintMode');}
+  if(type==='scale'){state.scaleQuality=ui.scaleQuality.value;state.scaleString=selected('scaleString');state.hintMode=selected('hintMode');}
   else if(type==='interval')state.hintMode=selected('hintMode');
   else if(type==='triad'){state.arpString=selected('arpString');state.triadType=ui.triadType.value;state.hintMode=selected('hintMode');}
-  else{state.scaleQuality=selected('scaleQuality');state.hintMode=selected('hintMode');}
+  else{state.scaleQuality=ui.scaleQuality.value;state.hintMode=selected('hintMode');}
 }
 
 function applyTheorySettings(type){
   const state=theorySessionSettings[type];choose('theoryRootRange',state.rootRange||'natural');ui.scaleKey.value=state.scaleKey;updateTheoryKeyAvailability();
-  if(state.scaleQuality)choose('scaleQuality',state.scaleQuality);if(state.scaleString)choose('scaleString',state.scaleString);if(state.arpString)choose('arpString',state.arpString);if(state.hintMode)choose('hintMode',state.hintMode);if(state.triadType)ui.triadType.value=state.triadType;
+  if(state.scaleQuality)ui.scaleQuality.value=state.scaleQuality;if(state.scaleString)choose('scaleString',state.scaleString);if(state.arpString)choose('arpString',state.arpString);if(state.hintMode)choose('hintMode',state.hintMode);if(state.triadType)ui.triadType.value=state.triadType;
 }
 
 function resetScale(keepExercise=false){
   clearTimeout(scaleAdvanceTimer);scaleAdvanceTimer=null;
   scaleIndex=0;scaleRootMidi=null;scaleSequence=[];scaleArmed=false;scaleLastMidi=null;scaleStable=0;scaleAcceptedMidi=null;scaleAcceptedAt=0;scaleHintRevealed=false;releaseFrames=0;
-  updateTheorySettings();theoryKind=ui.theoryType.value;theoryQuality=selected('scaleQuality');
-  const keyMode=ui.scaleKey.value,stringMode=theoryKind==='scale'?selected('scaleString'):theoryKind==='triad'?selected('arpString'):'E',coverage=theoryCoverageContext(theoryKind),coveragePick=!keepExercise?(theoryKind==='triad'?pickTriadCoverageCandidate(coverage):coverage.unseen.length?randomChoice(coverage.unseen):null):null,keyOptions=keepExercise?[scaleExerciseKey]:coveragePick?[coveragePick.key]:theoryKeyOptions(),stringOptions=keepExercise?[scaleExerciseString]:coveragePick?[coveragePick.string]:stringMode==='mixed'?(theoryKind==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode],maxSpan=theoryKind==='scale'?12:theoryKind==='degree'?0:24;
+  updateTheorySettings();theoryKind=ui.theoryType.value;theoryQuality=ui.scaleQuality.value;
+  const keyMode=ui.scaleKey.value,stringMode=theoryKind==='scale'?selected('scaleString'):theoryKind==='triad'?selected('arpString'):'E',coverage=theoryCoverageContext(theoryKind),coveragePick=!keepExercise?(theoryKind==='triad'?pickTriadCoverageCandidate(coverage):coverage.unseen.length?randomChoice(coverage.unseen):null):null,keyOptions=keepExercise?[scaleExerciseKey]:coveragePick?[coveragePick.key]:theoryKeyOptions(),stringOptions=keepExercise?[scaleExerciseString]:coveragePick?[coveragePick.string]:stringMode==='mixed'?(theoryKind==='triad'?['E','A']:Object.keys(STRINGS)):[stringMode],selectedChordKind=coveragePick?.kind||(keepExercise?currentTriadKind:ui.triadType.value),maxSpan=theoryKind==='scale'?12:theoryKind==='degree'?0:theoryKind==='triad'?Math.max(...CHORD_DEFINITIONS[selectedChordKind==='random'?'major':selectedChordKind].intervals):24;
   let pairs=[];for(const key of keyOptions)for(const string of stringOptions)if(canCompleteFromString(key,string,maxSpan))pairs.push({key,string});
   if((keyMode==='random'||stringMode==='mixed')&&pairs.length){const fresh=keyMode==='random'?pairs.filter(pair=>pair.key!==previousScaleKey):pairs.filter(pair=>pair.string!==previousScaleString);const pair=randomChoice(fresh.length?fresh:pairs);scaleExerciseKey=pair.key;scaleExerciseString=pair.string;}
   else{scaleExerciseKey=keyMode==='random'?randomChoice(keyOptions,previousScaleKey):keyMode;scaleExerciseString=stringMode==='mixed'?randomChoice(stringOptions,previousScaleString):stringMode;}
   previousScaleKey=scaleExerciseKey;previousScaleString=scaleExerciseString;
-  let tonic=TONICS[scaleExerciseKey][theoryQuality];
+  let tonic=TONICS[scaleExerciseKey][theoryKind==='scale'?SCALE_DEFINITIONS[theoryQuality].context:theoryKind==='degree'?theoryQuality:'major'];
   if(theoryKind==='scale'){
-    const base=theoryQuality==='major'?MAJOR_INTERVALS:MINOR_INTERVALS;theoryIntervals=[...base,...base.slice(1,-1).reverse(),0];theoryNames=[...tonic.notes,...tonic.notes.slice(0,-1).reverse()];theoryLabel=`${tonic.label} ${theoryQuality==='major'?'大调':'自然小调'}`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='上行一个八度，再下行返回';
+    const definition=SCALE_DEFINITIONS[theoryQuality],ascendingNames=scaleNames(scaleExerciseKey,definition);theoryIntervals=[...definition.intervals,...definition.intervals.slice(1,-1).reverse(),0];theoryNames=[...ascendingNames,...ascendingNames.slice(0,-1).reverse()];theoryLabel=`${tonic.label} ${definition.label}`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='上行一个八度，再下行返回';
   }else if(theoryKind==='degree'){
     theoryDegree=keepExercise?theoryDegree:coveragePick?Number(coveragePick.degree):Number(randomChoice(['2','3','4','5','6','7'],previousDegree));previousDegree=String(theoryDegree);const base=theoryQuality==='major'?MAJOR_INTERVALS:MINOR_INTERVALS;theoryIntervals=[base[theoryDegree-1]];theoryNames=[tonic.notes[theoryDegree-1]];theoryLabel=`${tonic.label} ${theoryQuality==='major'?'大调':'自然小调'}的第 ${theoryDegree} 音`;ui.scalePrompt.textContent='请在任意位置弹出';ui.scaleDirectionText.textContent='只判断音名，不限制八度';scaleSequence=[(Number(scaleExerciseKey)+theoryIntervals[0])%12];
   }else if(theoryKind==='interval'){
     tonic=TONICS[scaleExerciseKey].major;theoryIntervals=[0,7,12,19,24];theoryNames=[tonic.notes[0],tonic.notes[4],tonic.notes[7],tonic.notes[4],tonic.notes[7]];theoryLabel=`${tonic.label} 根音 · 五度音型`;ui.scalePrompt.textContent=`从 E 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='跨四弦上行两个八度';
   }else{
-    const kind=keepExercise?currentTriadKind:coveragePick?coveragePick.kind:ui.triadType.value==='random'?randomChoice(['major','minor'],previousTriad):ui.triadType.value;currentTriadKind=kind;previousTriad=kind;tonic=TONICS[scaleExerciseKey][kind];theoryIntervals=kind==='major'?[0,4,7,12,16,19,24]:[0,3,7,12,15,19,24];theoryNames=[tonic.notes[0],tonic.notes[2],tonic.notes[4],tonic.notes[7],tonic.notes[2],tonic.notes[4],tonic.notes[7]];theoryLabel=`${tonic.label} ${kind==='major'?'大':'小'}三和弦琶音`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent='连续上行两个八度';
+    const kind=keepExercise?currentTriadKind:coveragePick?coveragePick.kind:ui.triadType.value==='random'?randomChoice(CHORD_KINDS,previousTriad):ui.triadType.value,definition=CHORD_DEFINITIONS[kind];currentTriadKind=kind;previousTriad=kind;tonic=TONICS[scaleExerciseKey][definition.context];theoryIntervals=definition.intervals;theoryNames=chordNames(scaleExerciseKey,kind);theoryLabel=`${tonic.label} ${definition.label}琶音`;ui.scalePrompt.textContent=`从 ${scaleExerciseString} 弦上的 ${tonic.label} 开始`;ui.scaleDirectionText.textContent=definition.direction;
   }
   updateTheoryCoverage();
   const keyLabel=keyMode==='random'?(theoryKind==='scale'||theoryKind==='degree'?'随机调':'随机根音'):tonic.label;
   const rootRangeLabel=rangeLabel(selected('theoryRootRange'));
-  if(theoryKind==='scale')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${rootRangeLabel} · ${keyLabel} · ${stringMode==='mixed'?'随机弦':stringMode+' 弦'}`;
+  if(theoryKind==='scale')ui.theoryOptionsSummary.textContent=`${rootRangeLabel} · ${keyLabel} · ${stringMode==='mixed'?'随机弦':stringMode+' 弦'}`;
   else if(theoryKind==='degree')ui.theoryOptionsSummary.textContent=`${theoryQuality==='major'?'大调':'自然小调'} · ${rootRangeLabel} · ${keyLabel}`;
   else if(theoryKind==='interval')ui.theoryOptionsSummary.textContent=`${rootRangeLabel} · ${keyLabel}`;
-  else ui.theoryOptionsSummary.textContent=`${ui.triadType.value==='random'?'随机大小和弦':ui.triadType.value==='major'?'大三和弦':'小三和弦'} · ${rootRangeLabel} · ${keyLabel} · ${stringMode==='mixed'?'随机 E/A 弦':stringMode+' 弦'}`;
+  else ui.theoryOptionsSummary.textContent=`${rootRangeLabel} · ${keyLabel} · ${stringMode==='mixed'?'随机 E/A 弦':stringMode+' 弦'}`;
   ui.scaleTitle.textContent=theoryLabel;ui.scaleFeedback.textContent=running?(theoryKind==='degree'?'请弹奏目标音':`请先弹根音 ${theoryNames[0]}`):'启用音频后开始';ui.scaleFeedback.className='feedback waiting';ui.scaleHeard.textContent='';renderScaleProgress();
 }
 
@@ -309,14 +336,14 @@ function switchModule(module){
 
 function showHome(){if(!ui.theoryPractice.hidden)captureTheorySettings();practiceActive=false;armed=false;scaleArmed=false;clearTimeout(advanceTimer);clearTimeout(scaleAdvanceTimer);advanceTimer=scaleAdvanceTimer=null;document.body.classList.remove('in-practice');ui.practiceWorkspace.hidden=true;ui.homeView.hidden=false;ui.audioControls.classList.remove('compact');}
 function openTheoryPractice(type){
-  if(!ui.theoryPractice.hidden)captureTheorySettings();practiceActive=true;ui.theoryType.value=type;applyTheorySettings(type);ui.theoryHub.hidden=true;ui.theoryPractice.hidden=false;ui.theoryPracticeTitle.textContent={scale:'音阶',interval:'五度音型',triad:'三和弦琶音',degree:'调内级数'}[type];resetScale();
+  if(!ui.theoryPractice.hidden)captureTheorySettings();practiceActive=true;ui.theoryType.value=type;applyTheorySettings(type);ui.theoryHub.hidden=true;ui.theoryPractice.hidden=false;ui.theoryPracticeTitle.textContent={scale:'音阶',interval:'五度音型',triad:'和弦琶音',degree:'调内级数'}[type];resetScale();
 }
 function showTheoryHub(){captureTheorySettings();practiceActive=false;armed=false;scaleArmed=false;clearTimeout(scaleAdvanceTimer);scaleAdvanceTimer=null;ui.theoryPractice.hidden=true;ui.theoryHub.hidden=false;}
 
 const NAVIGATION_APP='bass-trainer';
 const NAVIGATION_VIEWS=new Set(['home','fretboard','theory-hub','theory-practice']);
 const THEORY_PRACTICES=new Set(['scale','interval','triad','degree']);
-const THEORY_PAGE_TITLES={scale:'音阶练习',interval:'五度音型练习',triad:'三和弦琶音练习',degree:'调内级数练习'};
+const THEORY_PAGE_TITLES={scale:'音阶练习',interval:'五度音型练习',triad:'和弦琶音练习',degree:'调内级数练习'};
 let currentNavigationState=null;
 
 function normalizeNavigationTarget(target){
@@ -522,7 +549,7 @@ document.querySelectorAll('[data-home-action]').forEach(control=>control.addEven
     if(currentNavigationState?.view==='fretboard')openWrong();else{navigateTo('fretboard');queueMicrotask(openWrong);}
   }
 }));
-ui.resetScaleButton.addEventListener('click',()=>resetScale(true));ui.skipTheoryButton.addEventListener('click',()=>resetScale(false));[ui.theoryType,ui.scaleKey,ui.triadType].forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="scaleString"],input[name="arpString"],input[name="scaleQuality"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="hintMode"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();ui.theoryOptionsSummary.textContent=ui.theoryOptionsSummary.textContent.replace(/(?:提示|不提示)$/,selected('hintMode')==='guided'?'提示':'不提示');renderScaleProgress();}));
+ui.resetScaleButton.addEventListener('click',()=>resetScale(true));ui.skipTheoryButton.addEventListener('click',()=>resetScale(false));[ui.theoryType,ui.scaleKey,ui.scaleQuality,ui.triadType].forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="scaleString"],input[name="arpString"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();resetScale();}));document.querySelectorAll('input[name="hintMode"]').forEach(input=>input.addEventListener('change',()=>{saveSettings();renderScaleProgress();}));
 document.querySelectorAll('input[name="theoryRootRange"]').forEach(input=>input.addEventListener('change',()=>{updateTheoryKeyAvailability();saveSettings();resetScale();}));
 ui.wrongBankButton.addEventListener('click',startWrongPractice);ui.exitWrongButton.addEventListener('click',exitWrongPractice);ui.wrongPracticeDialog.addEventListener('cancel',event=>event.preventDefault());
 document.querySelectorAll('input[name="stringMode"]').forEach(input=>input.addEventListener('change',()=>{ui.stringPicker.classList.toggle('hidden',selected('stringMode')==='mixed');questionDeck=[];updateFretboardRangeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
