@@ -208,7 +208,9 @@ body:not(.in-practice) .shell { width:min(1420px,calc(100% - 64px)); margin:0 au
 .about-dialog-copy p+p { margin-top:8px; }
 .about-dialog-copy .about-dialog-storage-note { margin-top:12px; }
 .about-dialog-signoff { display:grid; grid-template-columns:minmax(170px,1fr) 300px; align-items:center; margin-top:-26px; margin-bottom:-18px; transform:translateX(-64px); }
-.about-dialog-maimai { position:relative; display:block; grid-column:2; grid-row:1; width:300px; height:auto; margin:0; transform:translate(42px,-20px); }
+.about-dialog-maimai-unit { position:relative; display:flex; align-items:center; grid-column:2; grid-row:1; flex-direction:column; width:300px; transform:translate(42px,-20px); }
+.about-dialog-maimai { display:block; width:300px; height:auto; margin:0; }
+.about-dialog-maimai-caption { margin-top:2px; color:rgba(95,94,89,.62); font-size:11px; font-weight:400; line-height:1.3; white-space:nowrap; }
 .about-dialog-contact { z-index:1; display:flex; align-items:center; grid-column:1; grid-row:1; flex-direction:column; gap:2px; transform:translate(10px,2px); color:#683c95; font-size:14px; font-weight:450; line-height:1.4; text-align:center; }
 .about-dialog-contact strong { color:#683c95; font-size:14px; font-weight:500; }
 .about-dialog-spiral { width:19px; height:19px; margin-top:5px; overflow:visible; fill:none; stroke:#683c95; stroke-width:1.35; stroke-linecap:round; stroke-linejoin:round; }
@@ -218,7 +220,8 @@ body:not(.in-practice) .shell { width:min(1420px,calc(100% - 64px)); margin:0 au
   .about-dialog-head h2 { font-size:27px; }
   .about-dialog-copy { width:100%; font-size:17px; }
   .about-dialog-signoff { grid-template-columns:minmax(160px,1fr) 270px; margin-top:-20px; margin-bottom:-14px; transform:translateX(-52px); }
-  .about-dialog-maimai { width:270px; transform:translate(36px,-16px); }
+  .about-dialog-maimai-unit { width:270px; transform:translate(36px,-16px); }
+  .about-dialog-maimai { width:270px; }
   .about-dialog-contact { transform:translate(8px,0); }
 }
 
@@ -332,7 +335,9 @@ body.in-practice .home-setup-bar.compact .bass-setup-copy { display:none; }
   .about-dialog-copy { width:100%; font-size:15px; line-height:1.7; }
   .about-dialog-copy p+p { margin-top:7px; }
   .about-dialog-signoff { grid-template-columns:108px 190px; justify-content:center; margin-top:-6px; margin-bottom:-8px; transform:translateX(-18px); }
-  .about-dialog-maimai { width:190px; transform:translate(16px,-8px); }
+  .about-dialog-maimai-unit { width:190px; transform:translate(16px,-8px); }
+  .about-dialog-maimai { width:190px; }
+  .about-dialog-maimai-caption { font-size:10px; }
   .about-dialog-contact { gap:1px; transform:translate(0,-3px); font-size:12px; }
   .about-dialog-contact strong { font-size:12px; }
   .about-dialog-spiral { width:18px; height:18px; margin-top:4px; }
