@@ -44,6 +44,26 @@
     if(clickedBackdrop)closeAbout();
   });
 
+  const helpTriggers=[...document.querySelectorAll('.help-note-trigger')];
+  const closeHelpNotes=except=>helpTriggers.forEach(trigger=>{if(trigger===except)return;trigger.setAttribute('aria-expanded','false');const popover=trigger.nextElementSibling;if(popover)popover.hidden=true;});
+  const positionHelpNote=trigger=>{
+    const popover=trigger.nextElementSibling;if(!popover||popover.hidden)return;
+    popover.style.removeProperty('top');popover.style.removeProperty('left');
+    const triggerRect=trigger.getBoundingClientRect(),popoverRect=popover.getBoundingClientRect(),edge=12,gap=8;
+    let left=triggerRect.left+triggerRect.width/2-popoverRect.width/2;
+    left=Math.max(edge,Math.min(left,window.innerWidth-popoverRect.width-edge));
+    let top=triggerRect.bottom+gap;
+    if(top+popoverRect.height>window.innerHeight-edge)top=triggerRect.top-popoverRect.height-gap;
+    popover.style.left=`${Math.max(edge,left)}px`;popover.style.top=`${Math.max(edge,top)}px`;
+  };
+  helpTriggers.forEach(trigger=>trigger.addEventListener('click',event=>{
+    event.stopPropagation();const popover=trigger.nextElementSibling,opening=popover?.hidden;closeHelpNotes(trigger);
+    if(!popover)return;popover.hidden=!opening;trigger.setAttribute('aria-expanded',String(!!opening));if(opening)positionHelpNote(trigger);
+  }));
+  document.addEventListener('click',event=>{if(!event.target.closest('.help-note'))closeHelpNotes();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeHelpNotes();});
+  window.addEventListener('resize',()=>helpTriggers.forEach(trigger=>{if(trigger.getAttribute('aria-expanded')==='true')positionHelpNote(trigger);}));
+
   const deviceStatus=document.getElementById('deviceStatus');
   const heroTitle=document.querySelector('.hero-copy h2');
   const syncHeroTitle=()=>{if(heroTitle)heroTitle.textContent=deviceStatus?.classList.contains('active')?'选择你的练习':'请连接音频设备';};

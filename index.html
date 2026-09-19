@@ -7,8 +7,8 @@
   <link rel="preload" as="image" href="assets/maimai-about.webp" type="image/webp" />
   <title>贝斯指板练习</title>
   <link rel="stylesheet" href="base-styles.css?v=20260902-1" />
-  <link rel="stylesheet" href="styles.css?v=20260919-13" />
-  <script src="home-ui.js?v=20260919-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260920-1" />
+  <script src="home-ui.js?v=20260920-1" defer></script>
   <script src="bass-motion.js?v=20260902-1" defer></script>
   <script src="theory-hub.js?v=20260905-2" defer></script>
 </head>
@@ -44,6 +44,10 @@
           <label class="sr-only" for="deviceSelect" data-tuning-text="audioLabel">音频输入设备</label>
           <select id="deviceSelect" disabled><option value="">启用后读取设备</option></select>
         </div>
+        <span class="help-note help-note--audio">
+          <button class="help-note-trigger" type="button" aria-label="音频输入说明" aria-expanded="false">?</button>
+          <span class="help-note-popover" role="tooltip" hidden>声卡直连通常能获得更稳定的输入。</span>
+        </span>
         <p id="deviceStatus" class="status"><span class="dot"></span>尚未连接</p>
         <details id="diagnosticPanel" class="diagnostic-panel" data-tuning-module="diagnostics">
           <summary>音频诊断</summary>
@@ -131,7 +135,7 @@
         </div>
       </div>
       <div class="setting-row">
-        <div><strong>答题时间</strong><small>超时不记入错题库</small></div>
+        <div><strong>答题时间</strong><small>超时不计入错题库</small></div>
         <div class="choice">
           <label><input type="radio" name="timeLimit" value="0" checked><span>不限时</span></label>
           <label><input type="radio" name="timeLimit" value="5"><span>5 秒</span></label>
@@ -167,7 +171,13 @@
     </section>
     <div class="fretboard-mobile-footer-actions">
       <button class="fretboard-mobile-home back-button" type="button" data-home-action="home">返回首页</button>
-      <div id="fretboardCoverage" class="coverage-status">覆盖 0 / 0</div>
+      <div class="coverage-help-group">
+        <div id="fretboardCoverage" class="coverage-status">覆盖 0 / 0</div>
+        <span class="help-note help-note--coverage">
+          <button class="help-note-trigger" type="button" aria-label="题库覆盖说明" aria-expanded="false">?</button>
+          <span class="help-note-popover" role="tooltip" hidden>当前设置下完整练过的题目 / 全部题目</span>
+        </span>
+      </div>
     </div>
     </div>
     </div>
@@ -292,7 +302,13 @@
       </section>
       <div class="theory-mobile-footer-actions">
         <button class="theory-mobile-hub back-button" type="button" data-theory-return>返回乐理 Hub</button>
-        <div id="theoryCoverage" class="coverage-status">覆盖 0 / 0</div>
+        <div class="coverage-help-group">
+          <div id="theoryCoverage" class="coverage-status">覆盖 0 / 0</div>
+          <span class="help-note help-note--coverage">
+            <button class="help-note-trigger" type="button" aria-label="题库覆盖说明" aria-expanded="false">?</button>
+            <span class="help-note-popover" role="tooltip" hidden>当前设置下完整练过的题目 / 全部题目</span>
+          </span>
+        </div>
       </div>
       </div>
       </div>
@@ -303,7 +319,20 @@
     </section>
   </main>
   <dialog id="wrongPracticeDialog" class="wrong-practice-dialog">
-    <div class="wrong-practice-head"><h2>错题练习</h2><span id="wrongPracticeRemaining"></span></div>
+    <div class="wrong-practice-head">
+      <div class="wrong-practice-title-row">
+        <h2>错题练习</h2>
+        <span class="help-note help-note--inverse">
+          <button class="help-note-trigger" type="button" aria-label="错题库说明" aria-expanded="false">?</button>
+          <span class="help-note-popover" role="tooltip" hidden>
+            <span>同一道题连续答错两次后会进入错题库。</span>
+            <span>首次作答正确才会移出。</span>
+            <span>错题库会保存在当前设备的浏览器中。</span>
+          </span>
+        </span>
+      </div>
+      <span id="wrongPracticeRemaining"></span>
+    </div>
     <div id="wrongPracticeBody" class="wrong-practice-body"></div>
   </dialog>
   <dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutDialogTitle">
@@ -314,6 +343,7 @@
     <div class="about-dialog-copy">
       <p>这是一个帮助记忆贝斯指板的小工具。</p>
       <p>它可以听实际弹奏的音高，和你一起完成练习。</p>
+      <p class="about-dialog-storage-note">练习进度和训练设置在刷新或关闭网站后会重置。</p>
       <p>目前包含指板音位记忆和一部分乐理练习，欢迎探索。</p>
     </div>
     <div class="about-dialog-signoff">
