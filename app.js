@@ -11,6 +11,7 @@ const NATURAL=new Set([0,2,4,5,7,9,11]);
 const ACCIDENTAL=new Set([1,3,6,8,10]);
 const STRINGS={E:28,A:33,D:38,G:43};
 let context,stream,analyser,samples,frame,running=false,paused=false;
+let deviceSyncTimers=[],deviceSyncGeneration=0,watchedAudioTrack=null;
 let target=null,lastMidi=null,stableCount=0,score=0,round=1,previousKey='';
 let armed=false,completed=false,wrongAnswer=false,wrongCountForQuestion=0,releaseFrames=0,advanceTimer=null;
 let questionDeck=[],deckSignature='',questionStartedAt=null,responseMs=null;
@@ -439,11 +440,63 @@ function resolveTimedSupport(switchToUntimed){
 
 async function listDevices(selectedId){
   const devices=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput');ui.deviceSelect.innerHTML='';
-  devices.forEach((device,index)=>{const option=document.createElement('option');option.value=device.deviceId;option.textContent=device.label||`音频输入 ${index+1}`;option.selected=device.deviceId===selectedId;ui.deviceSelect.append(option);});ui.deviceSelect.disabled=!devices.length;
+  devices.forEach((device,index)=>{const option=document.createElement('option');option.value=device.deviceId;option.textContent=device.label||`音频输入 ${index+1}`;ui.deviceSelect.append(option);});if(devices.some(device=>device.deviceId===selectedId))ui.deviceSelect.value=selectedId;ui.deviceSelect.disabled=!devices.length;
 }
 
 function setDeviceStatus(message,{active=false}={}){
   const dot=document.createElement('span');dot.className='dot';ui.deviceStatus.classList.toggle('active',active);ui.deviceStatus.replaceChildren(dot,document.createTextNode(message));
+}
+
+function getLiveAudioTrack(activeStream=stream){
+  const track=activeStream?.getAudioTracks?.()[0];
+  return activeStream?.active&&track?.readyState==='live'?track:null;
+}
+
+async function resolveActiveInput(activeStream=stream){
+  const track=getLiveAudioTrack(activeStream);if(!track)return null;
+  const settingsDeviceId=track.getSettings?.().deviceId||'';
+  let matchedDevice=null,enumerated=false;
+  try{
+    const devices=await navigator.mediaDevices.enumerateDevices();
+    enumerated=true;
+    const inputs=devices.filter(device=>device.kind==='audioinput');
+    matchedDevice=inputs.find(device=>device.deviceId===settingsDeviceId)||inputs.find(device=>track.label&&device.label===track.label)||null;
+  }catch{}
+  if(!getLiveAudioTrack(activeStream)||getLiveAudioTrack(activeStream)!==track)return null;
+  return {track,deviceId:matchedDevice?.deviceId||settingsDeviceId,label:matchedDevice?.label||track.label||'当前设备',matched:!!matchedDevice,enumerated};
+}
+
+function clearDeviceSyncTimers(){deviceSyncTimers.forEach(clearTimeout);deviceSyncTimers=[];}
+
+async function reconcileActiveInput(activeStream=stream,{final=false,generation=deviceSyncGeneration}={}){
+  const input=await resolveActiveInput(activeStream);if(generation!==deviceSyncGeneration||activeStream!==stream||!running)return true;
+  if(input&&(!input.enumerated||input.matched)){
+    if(input.enumerated)await listDevices(input.deviceId);
+    if(generation!==deviceSyncGeneration||activeStream!==stream||!running)return true;
+    watchActiveInput(activeStream,input.track);setDeviceStatus(`已连接：${input.label}`,{active:true});return true;
+  }
+  if(final){stop();return true;}
+  setDeviceStatus('正在切换输入设备…');
+  try{await listDevices('');}catch{}
+  return false;
+}
+
+function scheduleActiveInputReconciliation(activeStream=stream,{announce=true}={}){
+  clearDeviceSyncTimers();const generation=++deviceSyncGeneration;if(announce)setDeviceStatus('正在切换输入设备…');
+  [0,120,350,800,1600,3000].forEach((delay,index)=>{
+    const timer=setTimeout(async()=>{await reconcileActiveInput(activeStream,{final:index===5,generation});if(index===5&&generation===deviceSyncGeneration)clearDeviceSyncTimers();},delay);
+    deviceSyncTimers.push(timer);
+  });
+}
+
+function watchActiveInput(activeStream,track){
+  if(watchedAudioTrack===track)return;watchedAudioTrack=track;
+  const handleSourceChange=()=>{if(stream===activeStream)scheduleActiveInputReconciliation(activeStream);};
+  track.addEventListener('ended',handleSourceChange,{once:true});
+  track.addEventListener('mute',handleSourceChange);
+  track.addEventListener('unmute',handleSourceChange);
+  activeStream.addEventListener('inactive',handleSourceChange,{once:true});
+  activeStream.addEventListener('addtrack',handleSourceChange);
 }
 
 async function start(preferredId=ui.deviceSelect.value){
@@ -454,13 +507,13 @@ async function start(preferredId=ui.deviceSelect.value){
     const audio={echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1};if(preferredId)audio.deviceId={exact:preferredId};
     try{stream=await navigator.mediaDevices.getUserMedia({audio,video:false});}catch(error){if(!preferredId||!['OverconstrainedError','NotFoundError'].includes(error.name))throw error;delete audio.deviceId;stream=await navigator.mediaDevices.getUserMedia({audio,video:false});}
     context=new AudioContext({latencyHint:'interactive'});await context.resume();analyser=context.createAnalyser();analyser.fftSize=8192;analyser.smoothingTimeConstant=0;samples=new Float32Array(analyser.fftSize);context.createMediaStreamSource(stream).connect(analyser);
-    const settings=stream.getAudioTracks()[0].getSettings();await listDevices(settings.deviceId);running=true;ui.startButton.disabled=false;ui.startButton.textContent='断开音频';ui.startButton.classList.add('stop');setDeviceStatus('已连接：'+(stream.getAudioTracks()[0].label||'当前设备'),{active:true});
+    const activeStream=stream,input=await resolveActiveInput(activeStream);if(stream!==activeStream||!input)throw new DOMException('音频输入不可用','NotReadableError');await listDevices(input.deviceId);if(stream!==activeStream||!getLiveAudioTrack(activeStream))throw new DOMException('音频输入不可用','NotReadableError');running=true;watchActiveInput(activeStream,input.track);ui.startButton.disabled=false;ui.startButton.textContent='断开音频';ui.startButton.classList.add('stop');setDeviceStatus(`已连接：${input.label}`,{active:true});scheduleActiveInputReconciliation(activeStream,{announce:false});
     paused=false;timedSessionStarted=false;score=0;round=1;ui.score.textContent='0';ui.round.textContent='1';ui.pauseButton.disabled=false;ui.pauseButton.textContent='暂停练习';if(practiceActive){if(activeModule==='theory')resetScale();else newQuestion();}tick();
-  }catch(error){ui.startButton.disabled=false;const messages={NotAllowedError:'未获得麦克风权限',NotFoundError:'没有找到音频输入设备',NotReadableError:'设备正被其他程序占用'};setDeviceStatus(messages[error.name]||`连接失败：${error.message||error.name}`);}
+  }catch(error){stop(false);ui.startButton.disabled=false;const messages={NotAllowedError:'未获得麦克风权限',NotFoundError:'没有找到音频输入设备',NotReadableError:'设备正被其他程序占用'};setDeviceStatus(messages[error.name]||`连接失败：${error.message||error.name}`);}
 }
 
 function stop(reset=true){
-  running=false;paused=false;waitingForStart=false;timedSessionStarted=false;timeSupportPending=false;timedStruggleStreak=0;if(ui.timeSupportDialog.open)ui.timeSupportDialog.close();cancelAnimationFrame(frame);clearTimeout(advanceTimer);stream?.getTracks().forEach(t=>t.stop());context?.close();stream=context=analyser=null;
+  clearDeviceSyncTimers();deviceSyncGeneration++;watchedAudioTrack=null;running=false;paused=false;waitingForStart=false;timedSessionStarted=false;timeSupportPending=false;timedStruggleStreak=0;if(ui.timeSupportDialog.open)ui.timeSupportDialog.close();cancelAnimationFrame(frame);clearTimeout(advanceTimer);stream?.getTracks().forEach(t=>t.stop());context?.close();stream=context=analyser=null;
   if(reset){practiceMode='normal';closeWrongPracticeView();ui.startButton.textContent='启用音频';ui.startButton.classList.remove('stop');setDeviceStatus('已断开');ui.feedback.textContent='等待启用音频';ui.feedback.className='feedback waiting';ui.readyButton.hidden=true;ui.pauseButton.disabled=true;ui.pauseButton.textContent='暂停练习';ui.nextButton.disabled=true;if(activeModule==='theory')resetScale();}
 }
 
@@ -556,6 +609,6 @@ document.querySelectorAll('input[name="stringMode"]').forEach(input=>input.addEv
 document.querySelectorAll('input[name="bassString"],input[name="noteSet"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];updateFretboardRangeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
 document.querySelectorAll('input[name="octaveMode"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];updateFretboardChallengeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused&&practiceMode==='normal')newQuestion();}));
 document.querySelectorAll('input[name="timeLimit"]').forEach(input=>input.addEventListener('change',()=>{questionDeck=[];timedStruggleStreak=0;timedSessionStarted=selected('timeLimit')==='0';updateFretboardChallengeSummary();updateFretboardCoverage();saveSettings();if(running&&!paused)newQuestion();}));
-ui.fretCount.addEventListener('change',()=>{questionDeck=[];updateFretboardCoverage();saveSettings();if(activeModule==='theory')resetScale();else if(running&&!paused&&practiceMode==='normal')newQuestion();});navigator.mediaDevices?.addEventListener('devicechange',()=>listDevices(ui.deviceSelect.value));
+ui.fretCount.addEventListener('change',()=>{questionDeck=[];updateFretboardCoverage();saveSettings();if(activeModule==='theory')resetScale();else if(running&&!paused&&practiceMode==='normal')newQuestion();});navigator.mediaDevices?.addEventListener('devicechange',()=>{if(running)scheduleActiveInputReconciliation(stream);else listDevices(ui.deviceSelect.value);});
 ui.switchUntimedButton.addEventListener('click',()=>resolveTimedSupport(true));ui.continueTimedButton.addEventListener('click',()=>resolveTimedSupport(false));ui.timeSupportDialog.addEventListener('cancel',event=>event.preventDefault());
 initializeNavigation();

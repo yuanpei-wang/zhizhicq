@@ -1,5 +1,5 @@
 (() => {
-  const theoryPractice=document.getElementById('theoryPractice'),wrongDialog=document.getElementById('wrongPracticeDialog');
+  const theoryPractice=document.getElementById('theoryPractice'),wrongDialog=document.getElementById('wrongPracticeDialog'),aboutButton=document.getElementById('aboutButton'),aboutDialog=document.getElementById('aboutDialog'),closeAboutButton=document.getElementById('closeAboutButton');
 
   const flatNoteSelector='#scaleTitle,#scalePrompt,#scaleFeedback,#scaleHeard,.scale-step';
   const decorateFlatNote=element=>{
@@ -30,6 +30,18 @@
     const rect=wrongDialog.getBoundingClientRect();
     const clickedBackdrop=event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;
     if(clickedBackdrop)exitWrongButton?.click();
+  });
+
+  const closeAbout=()=>{if(aboutDialog?.open)aboutDialog.close();aboutButton?.classList.remove('is-active');};
+  aboutButton?.addEventListener('click',()=>{if(!aboutDialog?.open){aboutDialog.showModal();aboutButton.classList.add('is-active');}});
+  closeAboutButton?.addEventListener('click',closeAbout);
+  aboutDialog?.addEventListener('cancel',event=>{event.preventDefault();closeAbout();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&aboutDialog?.open){event.preventDefault();closeAbout();}});
+  aboutDialog?.addEventListener('click',event=>{
+    if(event.target!==aboutDialog||!aboutDialog.open)return;
+    const rect=aboutDialog.getBoundingClientRect();
+    const clickedBackdrop=event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;
+    if(clickedBackdrop)closeAbout();
   });
 
   const deviceStatus=document.getElementById('deviceStatus');
